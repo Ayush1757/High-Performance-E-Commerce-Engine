@@ -16,10 +16,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Routes
+import authRoutes from './routes/authRoutes';
+
 // Basic Route for testing
 app.get('/', (req: Request, res: Response) => {
   res.send('API is running...');
 });
+
+app.use('/api/auth', authRoutes);
 
 // Start Server
 app.listen(PORT, () => {
