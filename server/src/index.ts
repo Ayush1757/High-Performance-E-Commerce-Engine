@@ -18,6 +18,7 @@ app.use(express.json());
 
 // Routes
 import authRoutes from './routes/authRoutes';
+import productRoutes from './routes/productRoutes';
 
 // Basic Route for testing
 app.get('/', (req: Request, res: Response) => {
@@ -25,6 +26,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 // Start Server
 app.listen(PORT, () => {
