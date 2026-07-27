@@ -2,12 +2,14 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
+import { connectRedis } from './config/redis';
 
 // Load environment variables
 dotenv.config();
 
 // Initialize Database Connection
 connectDB();
+connectRedis();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
