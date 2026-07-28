@@ -1,6 +1,18 @@
 import { Request, Response } from 'express';
 import { Product } from '../models/Product';
+import { redisClient } from '../config/redis';
 import mongoose from 'mongoose';
+
+// Helper to clear product list cache when data changes
+const clearProductCache = async (): Promise<void> => {
+  try {
+    if (redisClient.isReady) {
+      await redisClient.del('products');
+    }
+  } catch (err) {
+    console.error('Redis cache invalidation error:', err);
+  }
+};
 
 // @desc    Create a new product
 // @route   POST /api/products
@@ -25,6 +37,8 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
       rating,
     });
 
+    await clearProductCache();
+
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: 'Failed to create product', error: (error as Error).message });
@@ -36,7 +50,26 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 // @access  Public
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
+    const cacheKey = 'products';
+
+    // 1. Check Redis first
+    if (redisClient.isReady) {
+      const cachedProducts = await redisClient.get(cacheKey);
+      if (cachedProducts) {
+        res.json(JSON.parse(cachedProducts));
+        return;
+      }
+    }
+
+    // 2. Otherwise read MongoDB
     const products = await Product.find({});
+
+    // 3. Store in Redis
+    if (redisClient.isReady) {
+      await redisClient.setEx(cacheKey, 3600, JSON.stringify(products));
+    }
+
+    // 4. Return response
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch products', error: (error as Error).message });
@@ -82,6 +115,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
     );
 
     if (updatedProduct) {
+      await clearProductCache();
       res.json(updatedProduct);
     } else {
       res.status(404).json({ message: 'Product not found' });
@@ -104,6 +138,7 @@ export const deleteProduct = async (req: Request, res: Response): Promise<void> 
     const product = await Product.findByIdAndDelete(req.params.id);
 
     if (product) {
+      await clearProductCache();
       res.json({ message: 'Product removed successfully' });
     } else {
       res.status(404).json({ message: 'Product not found' });
@@ -112,3 +147,4 @@ export const deleteProduct = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: 'Failed to delete product', error: (error as Error).message });
   }
 };
+
