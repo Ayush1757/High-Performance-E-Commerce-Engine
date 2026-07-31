@@ -61,3 +61,19 @@ export const invalidateCache = async (keys: string | string[]): Promise<void> =>
     console.error('[Redis] Cache invalidation error:', error);
   }
 };
+
+/**
+ * Utility to invalidate cache keys by glob pattern (e.g., "product:*").
+ */
+export const invalidateCachePattern = async (pattern: string): Promise<void> => {
+  try {
+    if (redisClient.isReady) {
+      const keys = await redisClient.keys(pattern);
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    }
+  } catch (error) {
+    console.error(`[Redis] Pattern cache invalidation error for "${pattern}":`, error);
+  }
+};

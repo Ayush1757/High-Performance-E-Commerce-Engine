@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema, Model } from 'mongoose';
+import { invalidateCache, invalidateCachePattern } from '../utils/cache';
 
 // 1. Create an interface representing a document in MongoDB.
 export interface IProduct extends Document {
@@ -31,5 +32,36 @@ const productSchema = new Schema<IProduct>(
   }
 );
 
-// 3. Create and export the Model.
+// Helper function to handle automatic cache invalidation
+const clearProductCache = async (doc?: IProduct | null) => {
+  const keysToInvalidate: string[] = ['products'];
+  if (doc && doc._id) {
+    keysToInvalidate.push(`product:${doc._id}`);
+  }
+  await invalidateCache(keysToInvalidate);
+  await invalidateCachePattern('products:*');
+};
+
+// 3. Register Mongoose Hooks for Automatic Cache Invalidation
+// Automatically invalidates Redis cache on Product Create/Save
+productSchema.post('save', async function (doc) {
+  await clearProductCache(doc);
+});
+
+// Automatically invalidates Redis cache on Product Update
+productSchema.post('findOneAndUpdate', async function (doc) {
+  await clearProductCache(doc);
+});
+
+// Automatically invalidates Redis cache on Product Delete
+productSchema.post('findOneAndDelete', async function (doc) {
+  await clearProductCache(doc);
+});
+
+// Automatically invalidates Redis cache on Batch Delete
+productSchema.post('deleteMany', async function () {
+  await clearProductCache();
+});
+
+// 4. Create and export the Model.
 export const Product: Model<IProduct> = mongoose.models.Product || mongoose.model<IProduct>('Product', productSchema);
