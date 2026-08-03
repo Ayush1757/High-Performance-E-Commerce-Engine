@@ -37,7 +37,14 @@ The server exposes the following RESTful API endpoints at `http://localhost:5000
 - `POST /api/auth/login` - Authenticate user & get token (Requires: email, password)
 
 ### Product Endpoints
-- `GET /api/products` - Fetch all products
+- `GET /api/products` - Fetch products with search, filtering, sorting, and pagination.
+  - **Query Parameters:**
+    - `search`: Keyword search across product name and description (e.g. `?search=phone`).
+    - `category`: Filter by product category (e.g. `?category=Electronics`).
+    - `brand`: Filter by brand (e.g. `?brand=Apple`).
+    - `minPrice` / `maxPrice`: Filter by price range (e.g. `?minPrice=100&maxPrice=500`).
+    - `sort`: Sort results (`price_asc`, `price_desc`, `rating_desc`, `name_asc`, `oldest`, `newest`).
+    - `page` / `limit`: Page number and limit per page (default: `page=1&limit=10`).
 - `GET /api/products/:id` - Fetch single product by ID
 - `POST /api/products` - Create a new product
 - `PUT /api/products/:id` - Update a product

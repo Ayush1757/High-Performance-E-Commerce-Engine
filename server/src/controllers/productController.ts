@@ -35,14 +35,99 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// @desc    Fetch all products using Cache-Aside Strategy
+// @desc    Fetch products with Search, Category Filter, Price Filter, Sorting, Pagination & Redis Cache-Aside
 // @route   GET /api/products
 // @access  Public
 export const getProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Cache-Aside: Check Redis -> If Miss, fetch from MongoDB -> Write to Redis (3600s TTL)
-    const products = await getOrSetCache('products', () => Product.find({}), 3600);
-    res.json(products);
+    const {
+      search,
+      category,
+      brand,
+      minPrice,
+      maxPrice,
+      sort,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    // Generate unique Redis cache key based on query parameters
+    const cacheKey = `products:${JSON.stringify(req.query)}`;
+
+    const fetchProductsData = async () => {
+      const query: any = {};
+
+      // 1. Search Query (partial case-insensitive match on name or description)
+      if (search) {
+        query.$or = [
+          { name: { $regex: search as string, $options: 'i' } },
+          { description: { $regex: search as string, $options: 'i' } },
+        ];
+      }
+
+      // 2. Category Filter
+      if (category) {
+        query.category = { $regex: `^${category as string}$`, $options: 'i' };
+      }
+
+      // 3. Brand Filter
+      if (brand) {
+        query.brand = { $regex: `^${brand as string}$`, $options: 'i' };
+      }
+
+      // 4. Price Range Filter
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        query.price = {};
+        if (minPrice !== undefined && minPrice !== '') {
+          query.price.$gte = Number(minPrice);
+        }
+        if (maxPrice !== undefined && maxPrice !== '') {
+          query.price.$lte = Number(maxPrice);
+        }
+      }
+
+      // 5. Sorting
+      let sortOptions: any = { createdAt: -1 }; // default newest first
+      if (sort === 'price_asc') {
+        sortOptions = { price: 1 };
+      } else if (sort === 'price_desc') {
+        sortOptions = { price: -1 };
+      } else if (sort === 'rating_desc') {
+        sortOptions = { rating: -1 };
+      } else if (sort === 'name_asc') {
+        sortOptions = { name: 1 };
+      } else if (sort === 'oldest') {
+        sortOptions = { createdAt: 1 };
+      }
+
+      // 6. Pagination Math
+      const pageNum = Math.max(1, Number(page));
+      const limitNum = Math.max(1, Number(limit));
+      const skip = (pageNum - 1) * limitNum;
+
+      // Execute total count and paginated query concurrently for performance
+      const [total, products] = await Promise.all([
+        Product.countDocuments(query),
+        Product.find(query)
+          .sort(sortOptions)
+          .skip(skip)
+          .limit(limitNum),
+      ]);
+
+      const pages = Math.ceil(total / limitNum);
+
+      return {
+        products,
+        page: pageNum,
+        pages,
+        total,
+      };
+    };
+
+    // Use Cache-Aside helper (cache results for 5 minutes / 300 seconds)
+    const result = await getOrSetCache(cacheKey, fetchProductsData, 300);
+
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch products', error: (error as Error).message });
   }

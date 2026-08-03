@@ -32,6 +32,14 @@ const productSchema = new Schema<IProduct>(
   }
 );
 
+// Performance Optimization: Indexes for fast search, filter, and sorting
+productSchema.index({ name: 'text', description: 'text' });
+productSchema.index({ category: 1 });
+productSchema.index({ brand: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ rating: -1 });
+productSchema.index({ category: 1, price: 1 });
+
 // Helper function to handle automatic cache invalidation
 const clearProductCache = async (doc?: IProduct | null) => {
   const keysToInvalidate: string[] = ['products'];
@@ -43,22 +51,18 @@ const clearProductCache = async (doc?: IProduct | null) => {
 };
 
 // 3. Register Mongoose Hooks for Automatic Cache Invalidation
-// Automatically invalidates Redis cache on Product Create/Save
 productSchema.post('save', async function (doc) {
   await clearProductCache(doc);
 });
 
-// Automatically invalidates Redis cache on Product Update
 productSchema.post('findOneAndUpdate', async function (doc) {
   await clearProductCache(doc);
 });
 
-// Automatically invalidates Redis cache on Product Delete
 productSchema.post('findOneAndDelete', async function (doc) {
   await clearProductCache(doc);
 });
 
-// Automatically invalidates Redis cache on Batch Delete
 productSchema.post('deleteMany', async function () {
   await clearProductCache();
 });
