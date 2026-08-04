@@ -17,6 +17,9 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Performance logging middleware
+import { perfLogger } from './middleware/perfLogger';
+app.use(perfLogger);
 
 // Routes
 import authRoutes from './routes/authRoutes';
