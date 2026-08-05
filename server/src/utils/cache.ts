@@ -1,4 +1,20 @@
 import { redisClient } from '../config/redis';
+import logger from './logger';
+
+/** Cache performance metrics tracker */
+const cacheMetrics = {
+  hits: 0,
+  misses: 0,
+  errors: 0,
+};
+
+/** Get current cache metrics */
+export const getCacheMetrics = () => ({
+  ...cacheMetrics,
+  hitRate: cacheMetrics.hits + cacheMetrics.misses > 0
+    ? ((cacheMetrics.hits / (cacheMetrics.hits + cacheMetrics.misses)) * 100).toFixed(2) + '%'
+    : '0%',
+});
 
 /**
  * Generic Cache-Aside helper function.
@@ -19,11 +35,16 @@ export const getOrSetCache = async <T>(
     if (redisClient.isReady) {
       const cachedData = await redisClient.get(key);
       if (cachedData) {
+        cacheMetrics.hits++;
+        logger.debug(`[Redis] Cache HIT for key "${key}"`);
         return JSON.parse(cachedData) as T;
       }
+      cacheMetrics.misses++;
+      logger.debug(`[Redis] Cache MISS for key "${key}"`);
     }
   } catch (error) {
-    console.error(`[Redis] Cache read error for key "${key}":`, error);
+    cacheMetrics.errors++;
+    logger.error(`[Redis] Cache read error for key "${key}":`, error);
   }
 
   // 2. Cache Miss or Redis Offline -> Read from primary data source (MongoDB)
@@ -34,9 +55,11 @@ export const getOrSetCache = async <T>(
     try {
       if (redisClient.isReady) {
         await redisClient.setEx(key, ttlInSeconds, JSON.stringify(freshData));
+        logger.debug(`[Redis] Cached key "${key}" with TTL ${ttlInSeconds}s`);
       }
     } catch (error) {
-      console.error(`[Redis] Cache write error for key "${key}":`, error);
+      cacheMetrics.errors++;
+      logger.error(`[Redis] Cache write error for key "${key}":`, error);
     }
   }
 
@@ -49,31 +72,42 @@ export const getOrSetCache = async <T>(
 export const invalidateCache = async (keys: string | string[]): Promise<void> => {
   try {
     if (redisClient.isReady) {
-      if (Array.isArray(keys)) {
-        if (keys.length > 0) {
-          await redisClient.del(keys);
-        }
-      } else {
-        await redisClient.del(keys);
+      const keyArray = Array.isArray(keys) ? keys : [keys];
+      if (keyArray.length > 0) {
+        await redisClient.del(keyArray);
+        logger.debug(`[Redis] Invalidated keys: ${keyArray.join(', ')}`);
       }
     }
   } catch (error) {
-    console.error('[Redis] Cache invalidation error:', error);
+    logger.error('[Redis] Cache invalidation error:', error);
   }
 };
 
 /**
  * Utility to invalidate cache keys by glob pattern (e.g., "product:*").
+ * Uses SCAN instead of KEYS to avoid blocking Redis in production.
  */
 export const invalidateCachePattern = async (pattern: string): Promise<void> => {
   try {
     if (redisClient.isReady) {
-      const keys = await redisClient.keys(pattern);
-      if (keys.length > 0) {
-        await redisClient.del(keys);
+      const allKeys: string[] = [];
+
+      // Use scanIterator to iterate without blocking (type-safe for redis v6)
+      const iterator = redisClient.scanIterator({
+        MATCH: pattern,
+        COUNT: 100,
+      }) as AsyncIterable<string>;
+
+      for await (const key of iterator) {
+        allKeys.push(key);
+      }
+
+      if (allKeys.length > 0) {
+        await Promise.all(allKeys.map((k) => redisClient.del(k)));
+        logger.debug(`[Redis] Pattern invalidation "${pattern}" removed ${allKeys.length} keys`);
       }
     }
   } catch (error) {
-    console.error(`[Redis] Pattern cache invalidation error for "${pattern}":`, error);
+    logger.error(`[Redis] Pattern cache invalidation error for "${pattern}":`, error);
   }
 };
