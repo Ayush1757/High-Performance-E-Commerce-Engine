@@ -1,19 +1,15 @@
-import { Router, Request, Response } from 'express';
-import { registerUser, loginUser } from '../controllers/authController';
-import { protect, AuthRequest } from '../middleware/authMiddleware';
+import { Router } from 'express';
+import { registerUser, loginUser, getUserProfile, updateUserProfile } from '../controllers/authController';
+import { protect } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// Public routes
 router.post('/register', registerUser);
 router.post('/login', loginUser);
 
-// Example of a protected route using the middleware
-router.get('/profile', protect, (req: Request, res: Response) => {
-  const authReq = req as AuthRequest;
-  res.json({
-    message: 'Profile data retrieved successfully',
-    user: authReq.user,
-  });
-});
+// Protected routes (require authentication)
+router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateUserProfile);
 
 export default router;

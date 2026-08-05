@@ -11,6 +11,7 @@ export interface IProduct extends Document {
   brand: string;
   images: string[];
   rating: number;
+  embedding?: number[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +27,7 @@ const productSchema = new Schema<IProduct>(
     brand: { type: String, required: true, trim: true },
     images: { type: [String], required: true, default: [] },
     rating: { type: Number, required: true, min: 0, max: 5, default: 0 },
+    embedding: { type: [Number], select: false }, // Hidden by default for performance
   },
   {
     timestamps: true, // Automatically manages createdAt and updatedAt
