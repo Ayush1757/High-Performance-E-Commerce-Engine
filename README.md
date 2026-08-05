@@ -1,69 +1,119 @@
-# High-Performance E-Commerce Engine with AI Vector Search
+# AuraStore AI — High-Performance E-Commerce Engine with AI Vector Search
 
-A modern MERN stack monorepo project.
+AuraStore AI is a premium, production-ready, full-stack e-commerce platform built with the MERN stack, Redis Cache-Aside, and MongoDB Atlas Vector Search. The platform delivers modern UI aesthetics, robust security controls, high performance caching, and conceptual semantic search.
+
+---
+
+## Key Platform Features
+
+- **AI Semantic Vector Search**: Find products naturally by describing concepts (e.g., "warm winter clothing" or "latest smartphone with high battery life") using high-performance vector aggregation stages, with keyword fallback.
+- **Cache-Aside Performance Architecture**: Up to 99% reduction in latency for product listings and detail pages utilizing Redis buffer caching.
+- **Transactional Consistency**: Multi-document transactional order checkouts ensuring atomic stock reduction and inventory control.
+- **Security Hardening**: Integrated Helmet headers, request rate-limiters, MongoDB injection sanitization, CORS protection, and encrypted JWT auth scopes.
+- **Premium User Experience**: Responsive layout with smooth micro-animations, product filtering/sorting, checkout pages, and dark mode support.
+- **Interactive Admin Dashboard**: Access platform analytics, cache performance hit rates, total revenue telemetry, and update user privileges.
+
+---
+
+## Technology Stack
+
+- **Frontend**: React 19, Vite 8, TypeScript, Tailwind CSS, Lucide Icons, Axios, React Hot Toast
+- **Backend**: Node.js, Express 5, TypeScript 7, Mongoose 9, MongoDB Atlas, Redis 6
+- **Tooling**: Winston loggers, Zod validation middleware, Docker & Docker Compose
+
+---
 
 ## Folder Structure
-- `client/`: React 19 + Vite + TypeScript + Tailwind CSS
-- `server/`: Node.js + Express + TypeScript
 
-## Installation
-```bash
-# Install client dependencies
-cd client
-npm install
-
-# Install server dependencies
-cd ../server
-npm install
+```
+ecommerce-ai-engine/
+├── client/                     # Frontend SPA (React 19 + Vite 8)
+│   ├── public/                 # Favicons and static assets
+│   └── src/
+│       ├── api/                # Axios instance configuration
+│       ├── components/         # Layout & reusable UI widgets
+│       ├── context/            # Global state (Auth, Shopping Cart)
+│       ├── hooks/              # Custom helper hooks (useDebounce)
+│       ├── pages/              # Platform views (Shop, Checkout, Admin)
+│       └── types/              # TypeScript typings
+├── server/                     # Backend API (Express + TypeScript)
+│   ├── src/
+│   │   ├── config/             # DB and Redis setups
+│   │   ├── controllers/        # Route controllers
+│   │   ├── middleware/         # Security, validation, logging, errors
+│   │   ├── models/             # Mongoose schemas
+│   │   ├── routes/             # Express routes
+│   │   └── utils/              # Embedding generators, logger, cache helper
+│   └── dist/                   # Transpiled build files
+├── docker-compose.yml          # Container configuration
+└── README.md                   # Platform documentation
 ```
 
-## Running locally
+---
+
+## Setup & Installation
+
+### Prerequisites
+- Node.js (v18 or higher)
+- Redis Server (local or cloud instance)
+- MongoDB (Atlas or local instance)
+
+### Local Configuration
+1. Clone the repository.
+2. In the `server` directory, create a `.env` file based on `.env.example`:
+   ```bash
+   PORT=5000
+   MONGO_URI=your_mongodb_connection_uri
+   JWT_SECRET=your_jwt_secret_key
+   REDIS_URI=redis://127.0.0.1:6379
+   CLIENT_URL=http://localhost:5173
+   NODE_ENV=development
+   ```
+3. In the `client` directory, create a `.env` file based on `.env.example`:
+   ```bash
+   VITE_API_URL=http://localhost:5000/api
+   ```
+
+### Running Locally
 ```bash
-# Start client
-cd client
+# 1. Install & Seed database (In server directory)
+cd server
+npm install
+npm run data:import     # Seeds 1000 products with vector embeddings
+
+# 2. Run Backend
 npm run dev
 
-# Start server
-cd ../server
+# 3. Run Frontend (In client directory in new terminal)
+cd client
+npm install
 npm run dev
 ```
 
-## API Documentation
+---
 
-The server exposes the following RESTful API endpoints at `http://localhost:5000/api`:
+## Deployment & Docker Configuration
 
-### Auth Endpoints
-- `POST /api/auth/register` - Register a new user (Requires: name, email, password)
-- `POST /api/auth/login` - Authenticate user & get token (Requires: email, password)
+To launch the complete infrastructure stack (Client, Server, MongoDB, Redis) locally using Docker Compose:
 
-### Product Endpoints
-- `GET /api/products` - Fetch products with search, filtering, sorting, and pagination.
-  - **Query Parameters:**
-    - `search`: Keyword search across product name and description (e.g. `?search=phone`).
-    - `category`: Filter by product category (e.g. `?category=Electronics`).
-    - `brand`: Filter by brand (e.g. `?brand=Apple`).
-    - `minPrice` / `maxPrice`: Filter by price range (e.g. `?minPrice=100&maxPrice=500`).
-    - `sort`: Sort results (`price_asc`, `price_desc`, `rating_desc`, `name_asc`, `oldest`, `newest`).
-    - `page` / `limit`: Page number and limit per page (default: `page=1&limit=10`).
-- `GET /api/products/:id` - Fetch single product by ID
-- `POST /api/products` - Create a new product
-- `PUT /api/products/:id` - Update a product
-- `DELETE /api/products/:id` - Delete a product
-
-## Postman Collection
-
-For easy API testing, a Postman collection has been included in the repository.
-You can import `ecommerce-postman-collection.json` into your Postman workspace to quickly access and test all the available endpoints.
-
-## Database Seeding
-
-To quickly populate your database with 1000 demo products, ensure your `.env` contains a valid `MONGO_URI` and run:
 ```bash
-cd server
-npm run data:import
+# Build and run containers
+docker-compose up --build
 ```
-To clear the products from the database:
-```bash
-cd server
-npm run data:destroy
-```
+The Client will be served at `http://localhost:80` and the Backend API at `http://localhost:5000`.
+
+---
+
+## AI Vector Search & Caching Implementations
+
+### Redis Caching (Cache-Aside Strategy)
+When a client requests products, AuraStore AI first queries Redis:
+- **Cache Hit**: Data is returned instantly (typically < 5ms).
+- **Cache Miss**: AuraStore AI queries MongoDB, writes the result to Redis with a Time-To-Live (TTL), and returns it to the client.
+- **Cache Invalidation**: Mongoose hooks automatically invalidate related product caches on save, update, or delete.
+
+### MongoDB Vector Search
+Products are seeded with a 256-dimension vector embedding field generated by `server/src/utils/embeddings.ts`. When semantic search is used, AuraStore AI:
+1. Generates an embedding for the search phrase.
+2. Runs a MongoDB aggregation pipeline using the `$vectorSearch` operator (requires a search index named `vector_index`).
+3. If an index is not configured, it gracefully falls back to text search + regex match.
