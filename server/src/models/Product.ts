@@ -19,6 +19,7 @@ export interface IProduct extends Document {
 // 2. Create a Schema corresponding to the document interface.
 const productSchema = new Schema<IProduct>(
   {
+    _id: { type: Schema.Types.Mixed },
     name: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
