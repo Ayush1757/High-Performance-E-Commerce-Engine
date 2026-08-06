@@ -2,23 +2,49 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types';
 import { useCart } from '../../context/CartContext';
-import { Star, ShoppingCart, Heart, Eye } from 'lucide-react';
+import { useWishlist } from '../../context/WishlistContext';
+import { useCompare } from '../../context/CompareContext';
+import { Star, ShoppingCart, Heart, Eye, ArrowLeftRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
   index?: number;
+  onQuickView?: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0, onQuickView }) => {
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToCompare, isInCompare } = useCompare();
+
+  const isWishlisted = isInWishlist(product._id);
+  const isCompared = isInCompare(product._id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
-    toast.success(`Added to cart!`);
+    toast.success(`${product.name} added to cart!`);
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
+
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onQuickView) onQuickView(product);
+  };
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCompare(product);
   };
 
   const renderStars = (rating: number) => {
@@ -31,14 +57,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
     ));
   };
 
-  const discount = Math.floor(Math.random() * 30) + 5;
+  const discount = Math.floor(Math.random() * 20) + 10;
   const originalPrice = (product.price / (1 - discount / 100)).toFixed(2);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
+      transition={{ duration: 0.3, delay: index * 0.04 }}
     >
       <Link
         to={`/products/${product._id}`}
@@ -63,18 +89,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
           {/* Hover Actions */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all duration-300">
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              className="w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-text-secondary hover:text-danger transition-colors"
-              aria-label="Add to wishlist"
+              onClick={handleWishlist}
+              className={`w-8 h-8 rounded-lg shadow-md flex items-center justify-center transition-colors ${
+                isWishlisted ? 'bg-danger text-white' : 'bg-white text-text-secondary hover:text-danger'
+              }`}
+              aria-label="Wishlist"
+              title="Add to Wishlist"
             >
-              <Heart size={14} />
+              <Heart size={14} fill={isWishlisted ? 'currentColor' : 'none'} />
             </button>
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onClick={handleQuickView}
               className="w-8 h-8 bg-white rounded-lg shadow-md flex items-center justify-center text-text-secondary hover:text-accent transition-colors"
               aria-label="Quick view"
+              title="Quick View"
             >
               <Eye size={14} />
+            </button>
+            <button
+              onClick={handleCompare}
+              className={`w-8 h-8 rounded-lg shadow-md flex items-center justify-center transition-colors ${
+                isCompared ? 'bg-accent text-white' : 'bg-white text-text-secondary hover:text-accent'
+              }`}
+              aria-label="Compare"
+              title="Compare Product"
+            >
+              <ArrowLeftRight size={14} />
             </button>
           </div>
         </div>
@@ -106,6 +146,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) 
               disabled={product.stock === 0}
               className="w-9 h-9 rounded-lg bg-accent text-white flex items-center justify-center hover:bg-accent-hover disabled:bg-border disabled:text-text-muted transition-colors"
               aria-label="Add to cart"
+              title="Add to Cart"
             >
               <ShoppingCart size={16} />
             </button>
