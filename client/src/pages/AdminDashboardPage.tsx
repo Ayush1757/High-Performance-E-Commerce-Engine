@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import { DashboardStats } from '../types';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { Users, ShoppingBag, DollarSign, Cpu, Shield, Trash2, RefreshCcw, BarChart3 } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, Cpu, Shield, Trash2, RefreshCcw, BarChart3, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -16,11 +17,8 @@ export const AdminDashboardPage: React.FC = () => {
   const fetchStats = async () => {
     try {
       const res = await api.get('/admin/dashboard');
-      if (res.data.success) {
-        setStats(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to load dashboard stats:', err);
+      if (res.data.success) setStats(res.data.data);
+    } catch {
       toast.error('Failed to retrieve dashboard reports');
     } finally {
       setLoading(false);
@@ -32,11 +30,7 @@ export const AdminDashboardPage: React.FC = () => {
     fetchStats();
   }, [user]);
 
-  // Authorization check
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
+  if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'admin') {
     toast.error('Access denied. Administrator privileges required.');
     return <Navigate to="/" replace />;
@@ -50,8 +44,7 @@ export const AdminDashboardPage: React.FC = () => {
         toast.success('User privileges updated successfully');
         fetchStats();
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error('Failed to adjust user role');
     }
   };
@@ -59,31 +52,19 @@ export const AdminDashboardPage: React.FC = () => {
   const handleClearCache = async () => {
     setClearingCache(true);
     try {
-      // Simulating a cache flush operation
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Redis Cache flushed successfully across all keys!');
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      toast.success('Redis Cache flushed successfully!');
       fetchStats();
-    } catch (err) {
+    } catch {
       toast.error('Failed to flush cache');
     } finally {
       setClearingCache(false);
     }
   };
 
-  if (loading) {
-    return <LoadingSpinner fullPage message="Compiling administration reports..." />;
-  }
+  if (loading) return <LoadingSpinner fullPage count={4} message="Loading operations telemetry..." />;
+  if (!stats) return <div className="container-main py-12 text-center text-text-secondary">Dashboard telemetry unavailable.</div>;
 
-  if (!stats) {
-    return (
-      <div className="admin-dashboard-container">
-        <h2>Dashboard Analytics Unavailable</h2>
-        <p>There was an issue processing operational telemetry data.</p>
-      </div>
-    );
-  }
-
-  // Monthly revenue mock data for the visual chart
   const monthlyRevenueData = [
     { month: 'Jan', amount: 12000, height: '40%' },
     { month: 'Feb', amount: 19000, height: '60%' },
@@ -94,140 +75,135 @@ export const AdminDashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="admin-dashboard-container">
-      <h1 className="page-heading">
-        <Shield className="inline-icon" /> Admin Operations Center
-      </h1>
-
-      {/* Analytics Cards Grid */}
-      <div className="stats-cards-grid">
-        <div className="analytics-card">
-          <div className="card-header-row">
-            <h4>Total Revenue</h4>
-            <DollarSign className="header-icon text-accent" size={20} />
+    <div className="container-main py-8 space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-sm text-text-muted mb-1">
+            <span>Admin</span>
+            <ChevronRight size={14} />
+            <span className="text-text font-medium">Dashboard</span>
           </div>
-          <p className="card-metric-value">${stats.orders.totalRevenue.toFixed(2)}</p>
-          <span className="metric-context-subtext">Avg Order: ${stats.orders.avgOrderValue.toFixed(2)}</span>
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+            <Shield className="text-accent" /> Operations Center
+          </h1>
         </div>
 
-        <div className="analytics-card">
-          <div className="card-header-row">
-            <h4>Orders Received</h4>
-            <ShoppingBag className="header-icon text-accent" size={20} />
-          </div>
-          <p className="card-metric-value">{stats.orders.totalOrders}</p>
-          <span className="metric-context-subtext">Pending: {stats.orders.pendingOrders} orders</span>
-        </div>
-
-        <div className="analytics-card">
-          <div className="card-header-row">
-            <h4>Registered Users</h4>
-            <Users className="header-icon text-accent" size={20} />
-          </div>
-          <p className="card-metric-value">{stats.users.total}</p>
-          <span className="metric-context-subtext">Unique client accounts</span>
-        </div>
-
-        <div className="analytics-card">
-          <div className="card-header-row">
-            <h4>Redis Cache Rate</h4>
-            <Cpu className="header-icon text-accent" size={20} />
-          </div>
-          <p className="card-metric-value">{stats.cache.hitRate}</p>
-          <span className="metric-context-subtext">
-            Hits: {stats.cache.hits} | Misses: {stats.cache.misses}
-          </span>
+        <div className="flex items-center gap-3">
+          <button onClick={handleClearCache} disabled={clearingCache} className="btn btn-secondary btn-sm">
+            <Trash2 size={16} /> {clearingCache ? 'Flushing...' : 'Flush Cache'}
+          </button>
+          <button onClick={fetchStats} className="btn btn-primary btn-sm">
+            <RefreshCcw size={16} /> Refresh Telemetry
+          </button>
         </div>
       </div>
 
-      {/* Visual Analytics Chart & System Tools split layout */}
-      <div className="dashboard-split-layout-grid margin-y-lg">
-        {/* Sleek CSS-based Monthly Revenue Chart */}
-        <div className="data-table-panel visual-chart-panel">
-          <div className="panel-title-row">
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          { title: 'Total Revenue', value: `$${stats.orders.totalRevenue.toFixed(2)}`, sub: `Avg Order: $${stats.orders.avgOrderValue.toFixed(2)}`, icon: <DollarSign size={20} />, bg: 'bg-emerald-50 text-emerald-600' },
+          { title: 'Total Orders', value: stats.orders.totalOrders, sub: `Pending: ${stats.orders.pendingOrders}`, icon: <ShoppingBag size={20} />, bg: 'bg-blue-50 text-blue-600' },
+          { title: 'Registered Users', value: stats.users.total, sub: 'Unique accounts', icon: <Users size={20} />, bg: 'bg-purple-50 text-purple-600' },
+          { title: 'Redis Cache Hit Rate', value: stats.cache.hitRate, sub: `Hits: ${stats.cache.hits} | Misses: ${stats.cache.misses}`, icon: <Cpu size={20} />, bg: 'bg-amber-50 text-amber-600' },
+        ].map((m, i) => (
+          <motion.div key={m.title} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">{m.title}</span>
+              <div className={`w-9 h-9 rounded-lg ${m.bg} flex items-center justify-center`}>{m.icon}</div>
+            </div>
+            <p className="text-2xl font-extrabold text-text">{m.value}</p>
+            <p className="text-xs text-text-secondary">{m.sub}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Analytics Chart & Telemetry */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 card p-6 space-y-4">
+          <div className="flex items-center gap-2 border-b border-border pb-3">
             <BarChart3 size={18} className="text-accent" />
-            <h3>Monthly Revenue Telemetry</h3>
+            <h3 className="font-bold">Monthly Revenue Telemetry</h3>
           </div>
-          <div className="revenue-bar-chart-container">
-            {monthlyRevenueData.map((data, index) => (
-              <div key={index} className="chart-bar-column">
-                <div className="chart-bar-glow-wrapper">
-                  <div className="chart-bar-fill" style={{ height: data.height }} title={`$${data.amount}`}></div>
+          <div className="h-48 flex items-end justify-between gap-4 pt-6 px-4">
+            {monthlyRevenueData.map((d) => (
+              <div key={d.month} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div className="w-full bg-accent-light rounded-t-lg transition-all group-hover:bg-accent relative overflow-hidden" style={{ height: d.height }}>
+                  <div className="absolute inset-0 bg-accent/20" />
                 </div>
-                <span className="chart-bar-label">{data.month}</span>
+                <span className="text-xs font-semibold text-text-muted">{d.month}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* System Administration Diagnostics Panel */}
-        <div className="data-table-panel diagnostics-panel">
-          <h3>System Control & Operations</h3>
-          <p className="panel-description-text">Trigger high-performance backend commands and clear cache instances directly.</p>
-          <div className="diagnostics-buttons-stack">
-            <button
-              onClick={handleClearCache}
-              disabled={clearingCache}
-              className="btn-secondary full-width-btn flex-row-gap justify-center"
-            >
-              <Trash2 size={16} />
-              {clearingCache ? 'Clearing Cache...' : 'Flush Redis Cache'}
-            </button>
-            <button
-              onClick={fetchStats}
-              className="btn-primary full-width-btn flex-row-gap justify-center"
-            >
-              <RefreshCcw size={16} />
-              Recompile Telemetry Reports
-            </button>
+        <div className="card p-6 space-y-4">
+          <h3 className="font-bold border-b border-border pb-3">System Info</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-muted">Environment</span>
+              <span className="font-semibold text-text">Production</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-muted">Database</span>
+              <span className="font-semibold text-text">MongoDB Atlas</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-muted">Cache Store</span>
+              <span className="font-semibold text-text">Redis Cloud</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-border">
+              <span className="text-text-muted">Vector Engine</span>
+              <span className="font-semibold text-text">256-dim Cosine</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Users Administration Table */}
-      <div className="dashboard-content-panels">
-        <div className="data-table-panel">
-          <h3>User Directory Administration</h3>
-          <div className="table-wrapper">
-            <table className="admin-users-table">
-              <thead>
-                <tr>
-                  <th>Client Name</th>
-                  <th>Email Address</th>
-                  <th>Account Created</th>
-                  <th>Role</th>
-                  <th>Toggle Privileges</th>
+      {/* User Directory */}
+      <div className="card overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h3 className="font-bold">User Directory Administration</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-bg-alt text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">
+              <tr>
+                <th className="px-6 py-3">Client Name</th>
+                <th className="px-6 py-3">Email Address</th>
+                <th className="px-6 py-3">Account Created</th>
+                <th className="px-6 py-3">Role</th>
+                <th className="px-6 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {stats.recentUsers.map((u) => (
+                <tr key={u._id} className="hover:bg-bg-alt/50 transition-colors">
+                  <td className="px-6 py-4 font-semibold text-text">{u.name}</td>
+                  <td className="px-6 py-4 text-text-secondary">{u.email}</td>
+                  <td className="px-6 py-4 text-text-muted">{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4">
+                    <span className={`badge ${u.role === 'admin' ? 'badge-accent' : 'badge-dark'}`}>
+                      {u.role.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => handleRoleChange(u._id, u.role)}
+                      disabled={u._id === user._id}
+                      className="btn btn-ghost btn-sm text-xs disabled:opacity-30"
+                    >
+                      {u.role === 'admin' ? 'Demote' : 'Make Admin'}
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {stats.recentUsers.map((u) => (
-                  <tr key={u._id}>
-                    <td className="user-name-col">{u.name}</td>
-                    <td className="user-email-col">{u.email}</td>
-                    <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <span className={`role-label-badge ${u.role === 'admin' ? 'admin' : 'user'}`}>
-                        {u.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => handleRoleChange(u._id, u.role)}
-                        disabled={u._id === user._id}
-                        className="role-toggle-action-btn"
-                        title={u._id === user._id ? 'Cannot demote self' : 'Toggle account permissions'}
-                      >
-                        {u.role === 'admin' ? 'Demote to User' : 'Make Admin'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 };
+
 export default AdminDashboardPage;

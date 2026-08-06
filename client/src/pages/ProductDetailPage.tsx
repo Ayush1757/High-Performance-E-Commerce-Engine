@@ -5,7 +5,11 @@ import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
-import { Star, ShoppingCart, ArrowLeft, ShieldAlert, Check, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Star, ShoppingCart, ChevronRight, ShieldCheck, Truck,
+  RefreshCw, Minus, Plus, Check, AlertTriangle
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const ProductDetailPage: React.FC = () => {
@@ -21,11 +25,8 @@ export const ProductDetailPage: React.FC = () => {
     const fetchProduct = async () => {
       try {
         const res = await api.get(`/products/${id}`);
-        if (res.data.success) {
-          setProduct(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to load product details:', err);
+        if (res.data.success) setProduct(res.data.data);
+      } catch {
         toast.error('Product not found');
       } finally {
         setLoading(false);
@@ -37,233 +38,211 @@ export const ProductDetailPage: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart(product, quantity);
-      toast.success(`${quantity} x ${product.name} added to cart!`);
+      toast.success(`${quantity} × ${product.name} added to cart!`);
       navigate('/cart');
     }
   };
 
-  const getRatingStars = (rating: number, size = 18) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalf = rating % 1 !== 0;
+  const renderStars = (rating: number, size = 16) =>
+    Array.from({ length: 5 }, (_, i) => (
+      <Star key={i} size={size} className={i < Math.floor(rating) ? 'star-filled' : 'star-empty'} />
+    ));
 
-    for (let i = 1; i <= 5; i++) {
-      if (i <= fullStars) {
-        stars.push(<Star key={i} size={size} className="star-icon star-full" />);
-      } else if (i === fullStars + 1 && hasHalf) {
-        stars.push(<Star key={i} size={size} className="star-icon star-half" />);
-      } else {
-        stars.push(<Star key={i} size={size} className="star-icon star-empty" />);
-      }
-    }
-    return stars;
-  };
+  if (loading) return <LoadingSpinner fullPage count={1} message="Loading product..." />;
+  if (!product) return <EmptyState type="error" title="Product Not Found" description="This product doesn't exist." actionText="Back to Shop" actionPath="/products" />;
 
-  if (loading) {
-    return <LoadingSpinner fullPage message="Fetching product specifications..." />;
-  }
+  const specs = [
+    { name: 'Category', value: product.category },
+    { name: 'Brand', value: product.brand },
+    { name: 'Availability', value: product.stock > 0 ? `In Stock (${product.stock} units)` : 'Out of Stock' },
+    { name: 'Rating', value: `${product.rating} / 5` },
+    { name: 'Model Year', value: '2026' },
+    { name: 'Warranty', value: '1 Year Limited' },
+  ];
 
-  if (!product) {
-    return <EmptyState type="error" title="Product Not Found" description="The product with the requested ID does not exist." actionText="Back to Shop" actionPath="/products" />;
-  }
+  const reviews = [
+    { name: 'Sarah K.', date: 'Aug 1, 2026', stars: 5, verified: true, text: 'Absolutely spectacular. Exceeded my expectations!' },
+    { name: 'Alex M.', date: 'Jul 24, 2026', stars: 4, verified: true, text: 'Great quality. Performs exactly as described.' },
+  ];
 
-  // Simulated Specifications mapping based on Category
-  const getSpecsList = () => {
-    const defaultSpecs = [
-      { name: 'Model Year', value: '2026' },
-      { name: 'Manufacturer Warranty', value: '1 Year Limited' },
-      { name: 'Availability', value: product.stock > 0 ? 'In Stock' : 'Out of Stock' },
-      { name: 'Product Type', value: product.category },
-    ];
-
-    if (product.category === 'Mobiles') {
-      return [
-        { name: 'Processor', value: 'Next-Gen Octa-core Core' },
-        { name: 'Connectivity', value: '5G, Wi-Fi 6E, Bluetooth 5.3' },
-        ...defaultSpecs,
-      ];
-    } else if (product.category === 'Electronics') {
-      return [
-        { name: 'Hardware Interface', value: 'USB-C, HDMI 2.1, Jack 3.5mm' },
-        { name: 'Power Consumption', value: 'Energy-Efficient standard' },
-        ...defaultSpecs,
-      ];
-    }
-    return defaultSpecs;
-  };
-
-  const mockReviews = [
-    { name: 'Sarah K.', date: 'August 1, 2026', stars: 5, verified: true, text: 'Absolutely spectacular. Exceeded all my quality expectations, shipping was fast too!' },
-    { name: 'Alex M.', date: 'July 24, 2026', stars: 4.5, verified: true, text: 'Great premium feel. Performs exactly as described in the vector specifications. Highly recommended.' }
+  const tabs = [
+    { key: 'specs' as const, label: 'Specifications' },
+    { key: 'reviews' as const, label: `Reviews (${reviews.length})` },
+    { key: 'shipping' as const, label: 'Shipping & Returns' },
   ];
 
   return (
-    <div className="product-detail-page-container">
-      <div className="detail-header-nav">
-        <Link to="/products" className="back-link">
-          <ArrowLeft size={16} /> Back to Catalog
-        </Link>
-      </div>
+    <div className="container-main py-8">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 text-sm text-text-muted mb-8">
+        <Link to="/" className="hover:text-text">Home</Link>
+        <ChevronRight size={14} />
+        <Link to="/products" className="hover:text-text">Shop</Link>
+        <ChevronRight size={14} />
+        <span className="text-text font-medium truncate max-w-[200px]">{product.name}</span>
+      </nav>
 
-      <div className="detail-product-layout">
-        {/* Left: Product Media Gallery */}
-        <div className="detail-image-gallery">
-          <img
-            src={product.images[0] || 'https://placehold.co/600x600?text=Product'}
-            alt={product.name}
-            className="detail-main-img"
-          />
-        </div>
+      {/* Product Layout */}
+      <div className="grid lg:grid-cols-2 gap-10 mb-16">
+        {/* Image */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="card overflow-hidden"
+        >
+          <div className="aspect-square bg-bg-alt flex items-center justify-center p-8">
+            <img
+              src={product.images?.[0] || 'https://placehold.co/600x600?text=Product'}
+              alt={product.name}
+              className="max-w-full max-h-full object-contain hover:scale-105 transition-transform duration-500"
+            />
+          </div>
+        </motion.div>
 
-        {/* Right: Info & Actions */}
-        <div className="detail-product-info">
-          <span className="product-info-brand">{product.brand}</span>
-          <h1 className="product-info-name">{product.name}</h1>
-
-          <div className="product-info-rating-row">
-            <div className="stars-row">{getRatingStars(product.rating)}</div>
-            <span className="rating-value">{product.rating} / 5</span>
-            <span className="category-tag-badge">{product.category}</span>
+        {/* Info */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-6"
+        >
+          <div>
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">{product.brand}</span>
+            <h1 className="text-2xl md:text-3xl font-bold mt-1">{product.name}</h1>
           </div>
 
-          <div className="product-info-price-card">
-            <span className="info-price-text">${product.price.toFixed(2)}</span>
-            <div className="stock-status-row">
-              {product.stock > 0 ? (
-                <span className="status-indicator in-stock">
-                  <Check size={14} className="inline-icon" /> In Stock ({product.stock} left)
-                </span>
-              ) : (
-                <span className="status-indicator out-of-stock">
-                  <ShieldAlert size={14} /> Out of Stock
-                </span>
-              )}
+          <div className="flex items-center gap-3">
+            <div className="flex gap-0.5">{renderStars(product.rating)}</div>
+            <span className="text-sm text-text-secondary">{product.rating} / 5</span>
+            <span className="badge badge-accent">{product.category}</span>
+          </div>
+
+          <div className="card p-5 space-y-3">
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-extrabold">${product.price.toFixed(2)}</span>
+              <span className="text-lg text-text-muted line-through">${(product.price * 1.25).toFixed(2)}</span>
+              <span className="badge badge-success">Save 20%</span>
             </div>
+            {product.stock > 0 ? (
+              <span className="flex items-center gap-1.5 text-sm text-green-600"><Check size={14} /> In Stock · {product.stock} available</span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-sm text-danger"><AlertTriangle size={14} /> Out of Stock</span>
+            )}
           </div>
 
-          <div className="product-info-description">
-            <p>{product.description}</p>
-          </div>
+          <p className="text-sm text-text-secondary leading-relaxed">{product.description}</p>
 
           {product.stock > 0 && (
-            <div className="product-info-actions-card">
-              <div className="quantity-select-wrapper">
-                <label htmlFor="quantity-detail-select">Quantity</label>
-                <select
-                  id="quantity-detail-select"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                >
-                  {Array.from({ length: Math.min(10, product.stock) }, (_, i) => i + 1).map((num) => (
-                    <option key={num} value={num}>
-                      {num}
-                    </option>
-                  ))}
-                </select>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center border border-border rounded-lg">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-l-lg">
+                  <Minus size={16} />
+                </button>
+                <span className="w-12 text-center text-sm font-semibold">{quantity}</span>
+                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-r-lg">
+                  <Plus size={16} />
+                </button>
               </div>
-
-              <button onClick={handleAddToCart} className="btn-primary detail-add-cart-btn">
+              <button onClick={handleAddToCart} className="btn btn-primary btn-lg flex-1">
                 <ShoppingCart size={18} /> Add to Cart
               </button>
             </div>
           )}
 
-          {/* Secure Badges */}
-          <div className="detail-secure-badges-row">
-            <div className="secure-badge-pill">
-              <ShieldCheck size={16} /> Secure Checkout
-            </div>
-            <div className="secure-badge-pill">
-              <Truck size={16} /> Free Shipping
-            </div>
-            <div className="secure-badge-pill">
-              <RefreshCw size={16} /> 30-Day Returns
-            </div>
+          {/* Trust Badges */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: <ShieldCheck size={18} />, label: 'Secure Checkout' },
+              { icon: <Truck size={18} />, label: 'Free Shipping' },
+              { icon: <RefreshCw size={18} />, label: '30-Day Returns' },
+            ].map((b) => (
+              <div key={b.label} className="flex flex-col items-center gap-1.5 p-3 rounded-lg bg-bg-alt text-center">
+                <span className="text-accent">{b.icon}</span>
+                <span className="text-[11px] font-medium text-text-secondary">{b.label}</span>
+              </div>
+            ))}
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Tabs Section for Specs, Reviews & Shipping */}
-      <section className="product-detail-tabs-section glass-panel">
-        <div className="tabs-nav-bar">
-          <button
-            onClick={() => setActiveTab('specs')}
-            className={`tab-nav-btn ${activeTab === 'specs' ? 'active' : ''}`}
-          >
-            Specifications
-          </button>
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`tab-nav-btn ${activeTab === 'reviews' ? 'active' : ''}`}
-          >
-            Reviews ({mockReviews.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('shipping')}
-            className={`tab-nav-btn ${activeTab === 'shipping' ? 'active' : ''}`}
-          >
-            Shipping & Returns
-          </button>
+      {/* Tabs */}
+      <div className="card overflow-hidden">
+        <div className="flex border-b border-border">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-6 py-4 text-sm font-medium transition-colors relative ${
+                activeTab === tab.key ? 'text-accent' : 'text-text-secondary hover:text-text'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.key && (
+                <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+              )}
+            </button>
+          ))}
         </div>
 
-        <div className="tab-content-area">
+        <div className="p-6">
           {activeTab === 'specs' && (
-            <div className="specs-tab-view">
-              <table className="specs-table">
-                <tbody>
-                  {getSpecsList().map((spec, i) => (
-                    <tr key={i}>
-                      <td className="spec-label-col">{spec.name}</td>
-                      <td className="spec-val-col">{spec.value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="divide-y divide-border">
+              {specs.map((s) => (
+                <div key={s.name} className="flex py-3 text-sm">
+                  <span className="w-48 text-text-muted font-medium">{s.name}</span>
+                  <span className="text-text">{s.value}</span>
+                </div>
+              ))}
             </div>
           )}
 
           {activeTab === 'reviews' && (
-            <div className="reviews-tab-view">
-              <div className="reviews-summary-card">
-                <h3>Customer Feedback</h3>
-                <div className="review-average-row">
-                  <span className="big-rating">{product.rating}</span>
-                  <div>
-                    <div className="stars-row">{getRatingStars(product.rating, 14)}</div>
-                    <span className="total-ratings-label">Based on mock reviews</span>
-                  </div>
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-bg-alt">
+                <span className="text-4xl font-extrabold text-accent">{product.rating}</span>
+                <div>
+                  <div className="flex gap-0.5 mb-1">{renderStars(product.rating, 14)}</div>
+                  <span className="text-xs text-text-muted">Based on {reviews.length} reviews</span>
                 </div>
               </div>
-
-              <div className="reviews-list-wrapper">
-                {mockReviews.map((rev, i) => (
-                  <div key={i} className="review-item-card">
-                    <div className="review-item-header">
-                      <span className="reviewer-name">{rev.name}</span>
-                      {rev.verified && <span className="verified-buyer-badge">Verified Buyer</span>}
-                      <span className="review-date">{rev.date}</span>
+              {reviews.map((r, i) => (
+                <div key={i} className="space-y-2 pb-6 border-b border-border last:border-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-accent-light text-accent flex items-center justify-center text-xs font-bold">{r.name.charAt(0)}</div>
+                      <div>
+                        <span className="text-sm font-semibold">{r.name}</span>
+                        {r.verified && <span className="badge badge-success ml-2 text-[10px]">Verified</span>}
+                      </div>
                     </div>
-                    <div className="stars-row margin-y-xs">{getRatingStars(rev.stars, 12)}</div>
-                    <p className="review-text">{rev.text}</p>
+                    <span className="text-xs text-text-muted">{r.date}</span>
                   </div>
-                ))}
-              </div>
+                  <div className="flex gap-0.5">{renderStars(r.stars, 12)}</div>
+                  <p className="text-sm text-text-secondary">{r.text}</p>
+                </div>
+              ))}
             </div>
           )}
 
           {activeTab === 'shipping' && (
-            <div className="shipping-tab-view">
-              <h3>Delivery & Return Policies</h3>
-              <p>We process and ship orders within 24 hours. Delivery is free for all orders over $500, or a flat $50 shipping fee is applied.</p>
-              <h4>Fast Dispatch</h4>
-              <p>Shipped directly from our regional fulfillment centers to guarantee prompt arrival.</p>
-              <h4>Hassle-Free Returns</h4>
-              <p>We stand by our product vector quality. If you are not completely satisfied, return the product within 30 days for a full refund.</p>
+            <div className="space-y-4 text-sm text-text-secondary leading-relaxed">
+              <div>
+                <h4 className="font-semibold text-text mb-1">Delivery</h4>
+                <p>Orders processed within 24 hours. Free shipping on orders over $500, otherwise a flat $50 fee applies.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-text mb-1">Express Shipping</h4>
+                <p>Available at checkout for an additional fee. Delivered within 1–2 business days.</p>
+              </div>
+              <div>
+                <h4 className="font-semibold text-text mb-1">Returns</h4>
+                <p>30-day hassle-free returns. Return items in original condition for a full refund.</p>
+              </div>
             </div>
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 };
+
 export default ProductDetailPage;

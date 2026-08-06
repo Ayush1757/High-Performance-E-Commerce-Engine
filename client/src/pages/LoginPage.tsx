@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { Sparkles, Mail, Lock, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,65 +25,76 @@ export const LoginPage: React.FC = () => {
       toast.success('Welcome back!');
       navigate(redirectPath);
     } catch (err: any) {
-      console.error(err);
       toast.error(err.response?.data?.message || 'Invalid email or password');
     }
   };
 
   return (
-    <div className="auth-page-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo-circle">
-            <LogIn size={28} className="text-accent" />
-          </div>
-          <h2>Sign In</h2>
-          <p>Access your AuraStore account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <div className="input-with-icon">
-              <Mail size={18} className="input-icon" />
-              <input
-                type="email"
-                id="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    <div className="min-h-[80vh] flex items-center justify-center py-12 px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md"
+      >
+        <div className="card p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center mx-auto mb-3">
+              <Sparkles size={24} />
             </div>
+            <h1 className="text-2xl font-bold">Welcome Back</h1>
+            <p className="text-sm text-text-secondary">Sign in to your AuraStore account</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input
-                type="password"
-                id="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">Email Address</label>
+              <div className="relative">
+                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="input pl-10"
+                />
+              </div>
             </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">Password</label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="input pl-10"
+                />
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>Sign In <ArrowRight size={18} /></>
+              )}
+            </button>
+          </form>
+
+          <div className="text-center text-sm text-text-secondary border-t border-border pt-4">
+            Don't have an account?{' '}
+            <Link to={`/register?redirect=${encodeURIComponent(redirectPath)}`} className="text-accent font-semibold hover:underline">
+              Create one now
+            </Link>
           </div>
-
-          <button type="submit" disabled={loading} className="btn-primary auth-submit-btn">
-            {loading ? <LoadingSpinner message="Authenticating..." /> : <>Sign In</>}
-          </button>
-        </form>
-
-        <div className="auth-footer">
-          <p>
-            New to AuraStore? <Link to={`/register?redirect=${encodeURIComponent(redirectPath)}`}>Create an account</Link>
-          </p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
+
 export default LoginPage;

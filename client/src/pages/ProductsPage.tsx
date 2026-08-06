@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
 import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
 import { SearchBar } from '../components/products/SearchBar';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
-import { Sparkles, SlidersHorizontal, ArrowLeftRight } from 'lucide-react';
+import { Sparkles, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const ProductsPage: React.FC = () => {
@@ -14,8 +14,8 @@ export const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [metadata, setMetadata] = useState({ page: 1, pages: 1, total: 0 });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Read search filters from URL
   const queryParam = searchParams.get('search') || '';
   const isVectorParam = searchParams.get('isVector') === 'true';
   const categoryParam = searchParams.get('category') || '';
@@ -31,19 +31,16 @@ export const ProductsPage: React.FC = () => {
       try {
         let endpoint = '/products';
         const params = new URLSearchParams();
-
-        // Populate params
         if (categoryParam) params.append('category', categoryParam);
         if (brandParam) params.append('brand', brandParam);
         if (minPriceParam) params.append('minPrice', minPriceParam);
         if (maxPriceParam) params.append('maxPrice', maxPriceParam);
         if (sortParam) params.append('sort', sortParam);
         params.append('page', pageParam.toString());
-        params.append('limit', '8');
+        params.append('limit', '12');
 
         if (queryParam) {
           if (isVectorParam) {
-            // Using AI Vector Search endpoint
             endpoint = '/search';
             params.append('q', queryParam);
           } else {
@@ -55,11 +52,7 @@ export const ProductsPage: React.FC = () => {
         if (res.data.success) {
           if (isVectorParam) {
             setProducts(res.data.data.results);
-            setMetadata({
-              page: 1,
-              pages: 1,
-              total: res.data.data.total,
-            });
+            setMetadata({ page: 1, pages: 1, total: res.data.data.total });
           } else {
             setProducts(res.data.data.products);
             setMetadata({
@@ -69,205 +62,202 @@ export const ProductsPage: React.FC = () => {
             });
           }
         }
-      } catch (err) {
-        console.error('Failed to load products:', err);
-        toast.error('Failed to fetch catalog');
+      } catch {
+        toast.error('Failed to fetch products');
       } finally {
         setLoading(false);
       }
     };
-
     fetchProducts();
-  }, [
-    queryParam,
-    isVectorParam,
-    categoryParam,
-    brandParam,
-    minPriceParam,
-    maxPriceParam,
-    sortParam,
-    pageParam,
-  ]);
+  }, [queryParam, isVectorParam, categoryParam, brandParam, minPriceParam, maxPriceParam, sortParam, pageParam]);
 
-  const handleSearchTrigger = (q: string, isV: boolean) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (q) {
-      newParams.set('search', q);
-      newParams.set('isVector', isV.toString());
+  const handleSearch = (q: string, isV: boolean) => {
+    const p = new URLSearchParams(searchParams);
+    if (q) { p.set('search', q); p.set('isVector', isV.toString()); }
+    else { p.delete('search'); p.delete('isVector'); }
+    p.set('page', '1');
+    setSearchParams(p);
+  };
+
+  const handleFilter = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams);
+    if (value) p.set(key, value); else p.delete(key);
+    p.set('page', '1');
+    setSearchParams(p);
+  };
+
+  const handlePage = (num: number) => {
+    const p = new URLSearchParams(searchParams);
+    p.set('page', num.toString());
+    setSearchParams(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const clearAll = () => setSearchParams({});
+
+  const activeFilters = [
+    categoryParam && { key: 'category', label: `Category: ${categoryParam}` },
+    brandParam && { key: 'brand', label: `Brand: ${brandParam}` },
+    minPriceParam && { key: 'minPrice', label: `Min: $${minPriceParam}` },
+    maxPriceParam && { key: 'maxPrice', label: `Max: $${maxPriceParam}` },
+  ].filter(Boolean) as { key: string; label: string }[];
+
+  const categories = ['Electronics', 'Shoes', 'Mobiles', 'Clothing', 'Accessories', 'Suitcases', 'Audio'];
+  const brands = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'Zara', 'LG', 'Bose'];
+
+  const FilterSidebar = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold flex items-center gap-2"><SlidersHorizontal size={16} /> Filters</h3>
+        <button onClick={clearAll} className="text-xs text-accent hover:underline">Clear All</button>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Category</label>
+        <select value={categoryParam} onChange={(e) => handleFilter('category', e.target.value)} className="select text-sm">
+          <option value="">All Categories</option>
+          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Brand</label>
+        <select value={brandParam} onChange={(e) => handleFilter('brand', e.target.value)} className="select text-sm">
+          <option value="">All Brands</option>
+          {brands.map((b) => <option key={b} value={b}>{b}</option>)}
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Price Range</label>
+        <div className="flex gap-2">
+          <input type="number" placeholder="Min" value={minPriceParam} onChange={(e) => handleFilter('minPrice', e.target.value)} className="input text-sm" />
+          <input type="number" placeholder="Max" value={maxPriceParam} onChange={(e) => handleFilter('maxPrice', e.target.value)} className="input text-sm" />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Sort By</label>
+        <select value={sortParam} onChange={(e) => handleFilter('sort', e.target.value)} className="select text-sm">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="price_asc">Price: Low → High</option>
+          <option value="price_desc">Price: High → Low</option>
+          <option value="rating_desc">Top Rated</option>
+          <option value="name_asc">Name: A → Z</option>
+        </select>
+      </div>
+    </div>
+  );
+
+  // Pagination with ellipsis
+  const renderPagination = () => {
+    if (metadata.pages <= 1) return null;
+    const pages: (number | string)[] = [];
+    const current = metadata.page;
+    const total = Math.min(metadata.pages, 100);
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
     } else {
-      newParams.delete('search');
-      newParams.delete('isVector');
+      pages.push(1);
+      if (current > 3) pages.push('...');
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+      if (current < total - 2) pages.push('...');
+      pages.push(total);
     }
-    newParams.set('page', '1'); // Reset pagination
-    setSearchParams(newParams);
-  };
 
-  const handleFilterChange = (key: string, value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value) {
-      newParams.set(key, value);
-    } else {
-      newParams.delete(key);
-    }
-    newParams.set('page', '1');
-    setSearchParams(newParams);
+    return (
+      <div className="flex items-center justify-center gap-1 mt-10">
+        <button onClick={() => handlePage(current - 1)} disabled={current === 1} className="btn btn-ghost btn-sm disabled:opacity-30">
+          <ChevronLeft size={16} /> Prev
+        </button>
+        {pages.map((p, i) =>
+          typeof p === 'string' ? (
+            <span key={`ellipsis-${i}`} className="px-2 text-text-muted">…</span>
+          ) : (
+            <button key={p} onClick={() => handlePage(p)} className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${p === current ? 'bg-accent text-white' : 'hover:bg-bg-alt text-text-secondary'}`}>
+              {p}
+            </button>
+          )
+        )}
+        <button onClick={() => handlePage(current + 1)} disabled={current === total} className="btn btn-ghost btn-sm disabled:opacity-30">
+          Next <ChevronRight size={16} />
+        </button>
+      </div>
+    );
   };
-
-  const handlePageChange = (pageNum: number) => {
-    const newParams = new URLSearchParams(searchParams);
-    newParams.set('page', pageNum.toString());
-    setSearchParams(newParams);
-  };
-
-  const clearAllFilters = () => {
-    setSearchParams({});
-  };
-
-  const categories = ['Electronics', 'Shoes', 'Mobiles', 'Clothing', 'Accessories'];
-  const brands = ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'Zara', 'Gucci', 'LG'];
 
   return (
-    <div className="products-page-container">
-      <div className="search-section-header">
-        <h1 className="page-heading">Browse Store</h1>
-        <SearchBar
-          onSearch={handleSearchTrigger}
-          initialQuery={queryParam}
-          initialIsVector={isVectorParam}
-        />
+    <div className="container-main py-8">
+      {/* Header */}
+      <div className="mb-8 space-y-4">
+        <div className="flex items-center gap-2 text-sm text-text-muted">
+          <Link to="/" className="hover:text-text">Home</Link>
+          <span>/</span>
+          <span className="text-text font-medium">Shop</span>
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold">Browse Products</h1>
+        <SearchBar onSearch={handleSearch} initialQuery={queryParam} initialIsVector={isVectorParam} />
+
         {isVectorParam && (
-          <div className="ai-mode-status-indicator">
-            <Sparkles size={14} className="text-accent animate-pulse" />
-            <span>AI Vector Search enabled: matches concepts and descriptions</span>
+          <div className="flex items-center gap-2 text-sm text-accent">
+            <Sparkles size={14} className="animate-pulse" /> AI Vector Search active — matching by concept
+          </div>
+        )}
+
+        {/* Active Filter Pills */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {activeFilters.map((f) => (
+              <span key={f.key} className="badge badge-accent flex items-center gap-1">
+                {f.label}
+                <button onClick={() => handleFilter(f.key, '')} className="hover:text-accent-hover"><X size={12} /></button>
+              </span>
+            ))}
           </div>
         )}
       </div>
 
-      <div className="catalog-layout">
-        {/* Left Sidebar Filters */}
-        <aside className="filters-sidebar">
-          <div className="sidebar-header-row">
-            <h3>
-              <SlidersHorizontal size={16} /> Filters
-            </h3>
-            <button onClick={clearAllFilters} className="clear-filters-btn">
-              Clear All
-            </button>
-          </div>
+      {/* Mobile Filter Toggle */}
+      <button onClick={() => setFiltersOpen(!filtersOpen)} className="btn btn-secondary btn-sm mb-6 lg:hidden">
+        <SlidersHorizontal size={16} /> Filters
+      </button>
 
-          <div className="filter-group">
-            <label htmlFor="category-select">Category</label>
-            <select
-              id="category-select"
-              value={categoryParam}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="brand-select">Brand</label>
-            <select
-              id="brand-select"
-              value={brandParam}
-              onChange={(e) => handleFilterChange('brand', e.target.value)}
-            >
-              <option value="">All Brands</option>
-              {brands.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Price Range ($)</label>
-            <div className="price-inputs-row">
-              <input
-                type="number"
-                placeholder="Min"
-                value={minPriceParam}
-                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                aria-label="Minimum Price"
-              />
-              <ArrowLeftRight size={14} className="price-divider" />
-              <input
-                type="number"
-                placeholder="Max"
-                value={maxPriceParam}
-                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                aria-label="Maximum Price"
-              />
-            </div>
-          </div>
-
-          <div className="filter-group">
-            <label htmlFor="sort-select">Sort By</label>
-            <select
-              id="sort-select"
-              value={sortParam}
-              onChange={(e) => handleFilterChange('sort', e.target.value)}
-            >
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="rating_desc">Top Rated</option>
-              <option value="name_asc">Name: A to Z</option>
-            </select>
+      <div className="flex gap-8">
+        {/* Sidebar — Desktop */}
+        <aside className="hidden lg:block w-64 shrink-0">
+          <div className="card p-5 sticky top-24">
+            <FilterSidebar />
           </div>
         </aside>
 
-        {/* Right side catalog contents */}
-        <section className="catalog-products-results">
-          {loading ? (
-            <div className="center-loader-wrapper-large">
-              <LoadingSpinner message="Searching AuraStore inventory..." />
+        {/* Mobile Filter Drawer */}
+        {filtersOpen && (
+          <div className="fixed inset-0 bg-black/30 lg:hidden" style={{ zIndex: 'var(--z-modal)' }} onClick={() => setFiltersOpen(false)}>
+            <div className="absolute top-0 left-0 bottom-0 w-80 bg-surface p-6 shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-bold">Filters</h2>
+                <button onClick={() => setFiltersOpen(false)} className="btn-icon"><X size={20} /></button>
+              </div>
+              <FilterSidebar />
             </div>
+          </div>
+        )}
+
+        {/* Products */}
+        <section className="flex-1 min-w-0">
+          {loading ? (
+            <LoadingSpinner count={12} />
           ) : products.length === 0 ? (
             <EmptyState type="search" />
           ) : (
             <>
-              <div className="results-count-row">
-                <span className="results-total-text">Showing {metadata.total} products</span>
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-sm text-text-secondary">{metadata.total.toLocaleString()} products found</p>
               </div>
               <ProductGrid products={products} />
-
-              {/* Pagination controls */}
-              {!isVectorParam && metadata.pages > 1 && (
-                <div className="pagination-controls-row">
-                  <button
-                    disabled={pageParam === 1}
-                    onClick={() => handlePageChange(pageParam - 1)}
-                    className="pagination-btn"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: metadata.pages }, (_, i) => i + 1).map((pNum) => (
-                    <button
-                      key={pNum}
-                      onClick={() => handlePageChange(pNum)}
-                      className={`pagination-btn pagination-num ${pNum === pageParam ? 'active' : ''}`}
-                    >
-                      {pNum}
-                    </button>
-                  ))}
-                  <button
-                    disabled={pageParam === metadata.pages}
-                    onClick={() => handlePageChange(pageParam + 1)}
-                    className="pagination-btn"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+              {!isVectorParam && renderPagination()}
             </>
           )}
         </section>
@@ -275,4 +265,5 @@ export const ProductsPage: React.FC = () => {
     </div>
   );
 };
+
 export default ProductsPage;

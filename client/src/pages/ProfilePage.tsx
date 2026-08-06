@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { User, Mail, Lock, ShieldCheck } from 'lucide-react';
+import { User, Mail, Lock, ShieldCheck, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateProfile, loading } = useAuth();
@@ -13,7 +13,6 @@ export const ProfilePage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [updating, setUpdating] = useState(false);
 
-  // Auth Guard
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -44,7 +43,6 @@ export const ProfilePage: React.FC = () => {
       setConfirmPassword('');
       toast.success('Profile updated successfully!');
     } catch (err: any) {
-      console.error(err);
       toast.error(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setUpdating(false);
@@ -52,87 +50,103 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="profile-page-container">
-      <div className="profile-card">
-        <div className="profile-header">
-          <div className="profile-avatar">
-            <User size={36} className="text-accent" />
+    <div className="container-main py-12 flex justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-xl space-y-6"
+      >
+        {/* Profile Card Header */}
+        <div className="card p-6 flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+          <div className="w-20 h-20 rounded-2xl bg-accent-light text-accent flex items-center justify-center font-extrabold text-2xl shrink-0">
+            {user.name.charAt(0).toUpperCase()}
           </div>
-          <h2>My Profile</h2>
-          <p>Update your personal information and password settings</p>
-          <div className="profile-role-badge">
-            <ShieldCheck size={14} />
-            <span>Role: {user.role.toUpperCase()}</span>
+          <div className="space-y-1">
+            <h1 className="text-xl font-bold">{user.name}</h1>
+            <p className="text-sm text-text-secondary">{user.email}</p>
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-bg-alt text-xs font-semibold text-text-muted">
+              <ShieldCheck size={14} className="text-accent" /> Role: {user.role.toUpperCase()}
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="profile-form">
-          <div className="form-group">
-            <label htmlFor="profile-name">Full Name</label>
-            <div className="input-with-icon">
-              <User size={18} className="input-icon" />
-              <input
-                type="text"
-                id="profile-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+        {/* Edit Form Card */}
+        <div className="card p-8 space-y-6">
+          <h2 className="text-lg font-bold border-b border-border pb-3">Account Settings</h2>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">Full Name</label>
+              <div className="relative">
+                <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="input pl-10"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="profile-email">Email Address</label>
-            <div className="input-with-icon">
-              <Mail size={18} className="input-icon" />
-              <input
-                type="email"
-                id="profile-email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">Email Address</label>
+              <div className="relative">
+                <Mail size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="input pl-10"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="form-divider-row">
-            <span>Change Password (Optional)</span>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="profile-password">New Password</label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input
-                type="password"
-                id="profile-password"
-                placeholder="Leave blank to keep current password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-bold text-text-muted uppercase mb-4">Change Password (Optional)</p>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="profile-confirm-password">Confirm New Password</label>
-            <div className="input-with-icon">
-              <Lock size={18} className="input-icon" />
-              <input
-                type="password"
-                id="profile-confirm-password"
-                placeholder="Leave blank to keep current password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">New Password</label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="password"
+                  placeholder="Leave blank to keep current password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input pl-10"
+                />
+              </div>
             </div>
-          </div>
 
-          <button type="submit" disabled={updating || loading} className="btn-primary profile-submit-btn">
-            {updating ? <LoadingSpinner message="Saving settings..." /> : <>Save Changes</>}
-          </button>
-        </form>
-      </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-text-muted uppercase">Confirm New Password</label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                <input
+                  type="password"
+                  placeholder="Leave blank to keep current password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="input pl-10"
+                />
+              </div>
+            </div>
+
+            <button type="submit" disabled={updating || loading} className="btn btn-primary btn-lg w-full">
+              {updating ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <><Save size={18} /> Save Changes</>
+              )}
+            </button>
+          </form>
+        </div>
+      </motion.div>
     </div>
   );
 };
+
 export default ProfilePage;

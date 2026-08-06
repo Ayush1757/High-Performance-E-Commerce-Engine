@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api';
 import { useDebounce } from '../../hooks/useDebounce';
 
@@ -8,23 +9,23 @@ interface SearchBarProps {
   placeholder?: string;
   initialQuery?: string;
   initialIsVector?: boolean;
+  large?: boolean;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
-  placeholder = 'Search products...',
+  placeholder = 'Search products, brands, categories...',
   initialQuery = '',
   initialIsVector = false,
+  large = false,
 }) => {
   const [query, setQuery] = useState(initialQuery);
   const [isVector, setIsVector] = useState(initialIsVector);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
   const debouncedQuery = useDebounce(query, 300);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Handle clicking outside to hide suggestions
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -35,7 +36,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch suggestions when debouncedQuery changes
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (debouncedQuery.trim().length < 2 || isVector) {
@@ -47,11 +47,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         if (res.data.success) {
           setSuggestions(res.data.data);
         }
-      } catch (err) {
-        console.error('Failed to fetch suggestions:', err);
+      } catch {
+        // silently ignore suggestion errors
       }
     };
-
     fetchSuggestions();
   }, [debouncedQuery, isVector]);
 
@@ -67,65 +66,89 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     onSearch(productName, false);
   };
 
-  const handleToggleMode = () => {
-    const nextMode = !isVector;
-    setIsVector(nextMode);
-    setShowSuggestions(false);
-    onSearch(query, nextMode);
-  };
-
   return (
-    <div className="search-bar-outer-wrapper" ref={containerRef}>
-      <form onSubmit={handleSubmit} className={`search-bar-form ${isVector ? 'vector-mode-active' : ''}`}>
-        <div className="search-input-wrapper">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => setShowSuggestions(true)}
-            placeholder={isVector ? 'Ask AI: "cozy winter hoodie" or "noise canceling headphones"' : placeholder}
-            className="search-input-field"
-          />
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="suggestions-dropdown-card">
-              {suggestions.map((catGroup: any) => (
-                <div key={catGroup.category} className="suggestion-category-group">
-                  <span className="suggestion-category-title">{catGroup.category}</span>
-                  {catGroup.products.map((prod: any) => (
-                    <button
-                      key={prod._id}
-                      type="button"
-                      onClick={() => handleSuggestionClick(prod.name)}
-                      className="suggestion-item-btn"
-                    >
-                      <span className="suggested-name">{prod.name}</span>
-                      <span className="suggested-price">${prod.price.toFixed(2)}</span>
-                    </button>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
+    <div ref={containerRef} className="relative w-full">
+      <form
+        onSubmit={handleSubmit}
+        className={`flex items-center gap-2 bg-surface border rounded-xl transition-all duration-200 ${
+          large ? 'p-2 border-border shadow-md focus-within:shadow-lg focus-within:border-accent' : 'p-1.5 border-border focus-within:border-accent'
+        }`}
+      >
+        <div className="flex items-center pl-3 text-text-muted">
+          <Search size={large ? 20 : 18} />
         </div>
 
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          placeholder={isVector ? 'Ask AI: "cozy winter hoodie" or "noise canceling headphones"' : placeholder}
+          className={`flex-1 bg-transparent outline-none text-text placeholder-text-muted ${large ? 'text-base py-2' : 'text-sm py-1'}`}
+        />
+
+        {query && (
+          <button type="button" onClick={() => { setQuery(''); setSuggestions([]); }} className="text-text-muted hover:text-text p-1">
+            <X size={16} />
+          </button>
+        )}
+
+        {/* AI Toggle */}
         <button
           type="button"
-          onClick={handleToggleMode}
-          className={`search-mode-toggle-btn ${isVector ? 'active' : ''}`}
-          title={isVector ? 'Switch to Keyword Search' : 'Switch to AI Vector Search'}
+          onClick={() => { setIsVector(!isVector); setShowSuggestions(false); }}
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+            isVector
+              ? 'bg-accent text-white shadow-sm'
+              : 'bg-bg-alt text-text-secondary hover:bg-border'
+          }`}
         >
-          <Sparkles size={16} className={isVector ? 'animate-pulse' : ''} />
-          <span className="mode-label-text">{isVector ? 'AI Search' : 'Regular'}</span>
+          <Sparkles size={14} className={isVector ? 'animate-pulse' : ''} />
+          {isVector ? 'AI' : 'AI'}
         </button>
 
-        <button type="submit" className="search-submit-action-btn">
-          <Search size={18} />
+        <button
+          type="submit"
+          className={`btn btn-primary shrink-0 ${large ? '' : 'btn-sm'}`}
+        >
+          Search
         </button>
       </form>
+
+      {/* Suggestions Dropdown */}
+      <AnimatePresence>
+        {showSuggestions && suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="absolute left-0 right-0 top-full mt-2 bg-surface border border-border rounded-xl shadow-xl overflow-hidden"
+            style={{ zIndex: 'var(--z-dropdown)' }}
+          >
+            {suggestions.map((catGroup: any) => (
+              <div key={catGroup.category}>
+                <div className="px-4 py-2 text-[11px] font-semibold text-text-muted uppercase tracking-wider bg-bg-alt">{catGroup.category}</div>
+                {catGroup.products.map((prod: any) => (
+                  <button
+                    key={prod._id}
+                    type="button"
+                    onClick={() => handleSuggestionClick(prod.name)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-sm hover:bg-bg-alt transition-colors"
+                  >
+                    <span className="text-text truncate mr-4">{prod.name}</span>
+                    <span className="text-accent font-semibold shrink-0">${prod.price.toFixed(2)}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
 export default SearchBar;

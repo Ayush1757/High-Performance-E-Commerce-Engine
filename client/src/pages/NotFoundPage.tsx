@@ -3,15 +3,16 @@ import { EmptyState } from '../components/ui/EmptyState';
 
 export const NotFoundPage: React.FC = () => {
   return (
-    <div style={{ padding: '80px 20px' }}>
+    <div className="container-main py-16">
       <EmptyState
-        type="search"
+        type="error"
         title="404 — Page Not Found"
-        description="The resource or page you are trying to view does not exist on AuraStore."
-        actionText="Back to Catalog"
-        actionPath="/products"
+        description="The page you are looking for doesn't exist or has been moved."
+        actionText="Back to Home"
+        actionPath="/"
       />
     </div>
   );
 };
+
 export default NotFoundPage;

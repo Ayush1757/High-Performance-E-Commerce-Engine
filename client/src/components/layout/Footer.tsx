@@ -1,50 +1,125 @@
 import React from 'react';
-import { Sparkles, Cpu } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sparkles, Mail, ArrowRight, Globe } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
+  const [email, setEmail] = React.useState('');
+
+  const handleNewsletter = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    toast.success('Subscribed! Premium deals are on their way.');
+    setEmail('');
+  };
+
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="main-footer">
-      <div className="footer-container">
-        <div className="footer-brand">
-          <div className="brand-logo">
-            <Sparkles className="logo-icon text-accent" />
-            <span>AuraStore AI</span>
+    <footer className="bg-primary text-white mt-auto">
+      {/* Newsletter Banner */}
+      <div className="border-b border-white/10">
+        <div className="container-main py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center shrink-0">
+              <Mail size={22} className="text-accent" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Join the AI Retail Revolution</h3>
+              <p className="text-sm text-white/60">Get early access to deals and new product drops.</p>
+            </div>
           </div>
-          <p className="brand-tagline">
-            Next-generation shopping driven by semantic search intelligence.
-          </p>
-        </div>
-
-        <div className="footer-links">
-          <div className="footer-section">
-            <h4>Platform</h4>
-            <ul>
-              <li><a href="/products">Browse Catalog</a></li>
-              <li><a href="/products?category=Electronics">Electronics</a></li>
-              <li><a href="/products?category=Mobiles">Mobiles</a></li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h4>Technology</h4>
-            <ul>
-              <li><span className="flex-row-gap"><Cpu size={14} /> Vector Search</span></li>
-              <li><span>Redis Cache-Aside</span></li>
-              <li><span>Express API</span></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-social">
-          <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-github"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/></svg>
-          </a>
-          <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-twitter"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
-          </a>
+          <form onSubmit={handleNewsletter} className="flex gap-2 w-full md:w-auto">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              className="flex-1 md:w-72 px-4 py-3 rounded-lg bg-white/10 border border-white/10 text-white placeholder-white/40 text-sm outline-none focus:border-accent transition-colors"
+            />
+            <button type="submit" className="btn btn-primary shrink-0">
+              Subscribe <ArrowRight size={16} />
+            </button>
+          </form>
         </div>
       </div>
-      <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} AuraStore AI. Built for production excellence.</p>
+
+      {/* Main Footer Grid */}
+      <div className="container-main py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          {/* Brand */}
+          <div className="space-y-4">
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+                <Sparkles size={16} className="text-white" />
+              </div>
+              <span className="text-lg font-bold">Aura<span className="text-accent">Store</span></span>
+            </Link>
+            <p className="text-sm text-white/50 leading-relaxed">
+              High-performance e-commerce engine powered by AI vector search and Redis caching architecture.
+            </p>
+            <div className="flex items-center gap-3 pt-2">
+              <a href="#" aria-label="Website" className="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Globe size={16} /></a>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-4">Quick Links</h4>
+            <ul className="space-y-3">
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/products', label: 'Shop All' },
+                { to: '/cart', label: 'Cart' },
+                { to: '/orders', label: 'My Orders' },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to} className="text-sm text-white/60 hover:text-white transition-colors">{link.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-4">Categories</h4>
+            <ul className="space-y-3">
+              {['Electronics', 'Mobiles', 'Clothing', 'Accessories', 'Shoes'].map((cat) => (
+                <li key={cat}>
+                  <Link to={`/products?category=${cat}`} className="text-sm text-white/60 hover:text-white transition-colors">{cat}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-white/40 mb-4">Support</h4>
+            <ul className="space-y-3">
+              {['Help Center', 'Shipping Policy', 'Return Policy', 'Privacy Policy', 'Terms of Service'].map((item) => (
+                <li key={item}>
+                  <span className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Copyright */}
+      <div className="border-t border-white/10">
+        <div className="container-main py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-white/40">© {currentYear} AuraStore AI. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-white/30">Secured by</span>
+            <div className="flex items-center gap-3 text-white/40">
+              <span className="text-[10px] font-medium px-2 py-1 rounded border border-white/10">VISA</span>
+              <span className="text-[10px] font-medium px-2 py-1 rounded border border-white/10">MASTERCARD</span>
+              <span className="text-[10px] font-medium px-2 py-1 rounded border border-white/10">UPI</span>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   );

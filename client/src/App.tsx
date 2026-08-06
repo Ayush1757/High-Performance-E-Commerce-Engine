@@ -30,9 +30,13 @@ const App: React.FC = () => {
               toastOptions={{
                 duration: 3000,
                 style: {
-                  background: 'var(--bg-surface)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-color)',
+                  background: 'var(--color-surface)',
+                  color: 'var(--color-text)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  boxShadow: 'var(--shadow-lg)',
+                  fontSize: '0.875rem',
+                  fontFamily: 'var(--font-sans)',
                 },
               }}
             />
