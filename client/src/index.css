@@ -971,3 +971,582 @@ a, button {
   background: linear-gradient(180deg, rgba(13, 9, 23, 0.8) 0%, rgba(7, 4, 15, 0.9) 100%);
   border: 1px solid var(--border-color);
 }
+
+/* ==========================================================================
+   Premium Interactive Styles (SaaS & Cyber Storefront UI Redesign)
+   ========================================================================== */
+
+/* 1. Category Collections Grid (Homepage) */
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.category-card-premium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(15, 11, 26, 0.5) 0%, rgba(9, 6, 17, 0.75) 100%);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-smooth);
+  cursor: pointer;
+}
+
+.category-card-premium:hover {
+  transform: translateY(-8px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md), var(--glow-shadow);
+}
+
+.category-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--accent-light);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.1);
+  transition: all var(--transition-smooth);
+}
+
+.category-card-premium:hover .category-icon-circle {
+  background: var(--accent-gradient);
+  color: #fff;
+  border-color: transparent;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+}
+
+.category-card-premium h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.category-card-premium p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.category-item-count-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+}
+
+.category-card-premium:hover .category-item-count-badge {
+  background-color: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent-hover);
+}
+
+/* 2. System Architecture / Flow Explanation Box */
+.search-flow-explanation {
+  padding: 48px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(180deg, rgba(13, 9, 23, 0.6) 0%, rgba(7, 4, 15, 0.8) 100%);
+  text-align: center;
+}
+
+.explanation-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.explanation-header p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.explanation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  text-align: left;
+}
+
+.explanation-box {
+  position: relative;
+  padding-left: 20px;
+  border-left: 2px solid rgba(168, 85, 247, 0.2);
+}
+
+.box-num-badge {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.explanation-box h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.explanation-box p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* 3. Tech Newsletter Section */
+.newsletter-section {
+  padding: 60px 40px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(20, 10, 48, 0.4) 0%, rgba(5, 3, 10, 0.8) 100%);
+  text-align: center;
+}
+
+.newsletter-content {
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+.newsletter-icon {
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.4));
+}
+
+.newsletter-content h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.newsletter-content p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.newsletter-form {
+  display: flex;
+  gap: 12px;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.newsletter-input {
+  flex-grow: 1;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.newsletter-input::placeholder {
+  color: var(--text-muted);
+}
+
+.newsletter-btn {
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+}
+
+@media (max-width: 576px) {
+  .newsletter-form {
+    flex-direction: column;
+    background: none;
+    border: none;
+    padding: 0;
+    gap: 12px;
+  }
+  .newsletter-input {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* 4. Shipping Progress Bar & Promo Codes (Cart Page) */
+.shipping-progress-banner {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+}
+
+.progress-header {
+  font-size: 14px;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-smooth);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.promo-code-form {
+  margin-top: 12px;
+}
+
+.promo-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.promo-input-field {
+  flex-grow: 1;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  outline: none;
+}
+
+.promo-submit-btn {
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+}
+
+.applied-promo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-success);
+  background-color: var(--color-success-bg);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  margin-top: 10px;
+}
+
+.checkout-trust-seals {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 16px;
+}
+
+/* 5. Product Detail Tabs (Specs, Reviews, Policies) */
+.detail-secure-badges-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.secure-badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+}
+
+.product-detail-tabs-section {
+  margin-top: 48px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.tabs-nav-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.tab-nav-btn {
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.tab-nav-btn:hover {
+  color: #fff;
+}
+
+.tab-nav-btn.active {
+  color: var(--accent);
+}
+
+.tab-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-gradient);
+}
+
+.tab-content-area {
+  padding: 32px;
+  text-align: left;
+}
+
+.specs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.specs-table tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.specs-table tr:last-child {
+  border-bottom: none;
+}
+
+.specs-table td {
+  padding: 14px 10px;
+  font-size: 14px;
+}
+
+.spec-label-col {
+  width: 30%;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 11px !important;
+  letter-spacing: 0.05em;
+}
+
+.spec-val-col {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.reviews-summary-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.review-average-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.big-rating {
+  font-family: var(--font-heading);
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.total-ratings-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.reviews-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.review-item-card {
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.review-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.reviewer-name {
+  font-weight: 700;
+  color: #fff;
+}
+
+.verified-buyer-badge {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--color-success);
+  background-color: var(--color-success-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.review-date {
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.review-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.margin-y-xs {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+/* 6. Admin Revenue Telemetry Chart & System Diagnostics */
+.dashboard-split-layout-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 28px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-split-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.visual-chart-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.revenue-bar-chart-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  height: 200px;
+  padding: 10px 20px 0;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 8px;
+}
+
+.chart-bar-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12%;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.chart-bar-glow-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chart-bar-fill {
+  width: 16px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.4);
+  transition: height var(--transition-bounce);
+}
+
+.chart-bar-fill:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.7);
+}
+
+.chart-bar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.diagnostics-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-description-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.diagnostics-buttons-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.full-width-btn {
+  width: 100%;
+  text-align: center;
+}
+
+.margin-y-lg {
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+

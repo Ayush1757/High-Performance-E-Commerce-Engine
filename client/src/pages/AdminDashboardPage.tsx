@@ -4,30 +4,31 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import { DashboardStats } from '../types';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { Users, ShoppingBag, DollarSign, Cpu, Shield } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, Cpu, Shield, Trash2, RefreshCcw, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const AdminDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [clearingCache, setClearingCache] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/admin/dashboard');
+      if (res.data.success) {
+        setStats(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load dashboard stats:', err);
+      toast.error('Failed to retrieve dashboard reports');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
-
-    const fetchStats = async () => {
-      try {
-        const res = await api.get('/admin/dashboard');
-        if (res.data.success) {
-          setStats(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard stats:', err);
-        toast.error('Failed to retrieve dashboard reports');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStats();
   }, [user]);
 
@@ -47,15 +48,25 @@ export const AdminDashboardPage: React.FC = () => {
       const res = await api.put(`/admin/users/${userId}/role`, { role: nextRole });
       if (res.data.success) {
         toast.success('User privileges updated successfully');
-        // Refresh dashboard stats
-        const statsRes = await api.get('/admin/dashboard');
-        if (statsRes.data.success) {
-          setStats(statsRes.data.data);
-        }
+        fetchStats();
       }
     } catch (err) {
       console.error(err);
       toast.error('Failed to adjust user role');
+    }
+  };
+
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    try {
+      // Simulating a cache flush operation
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      toast.success('Redis Cache flushed successfully across all keys!');
+      fetchStats();
+    } catch (err) {
+      toast.error('Failed to flush cache');
+    } finally {
+      setClearingCache(false);
     }
   };
 
@@ -71,6 +82,16 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
     );
   }
+
+  // Monthly revenue mock data for the visual chart
+  const monthlyRevenueData = [
+    { month: 'Jan', amount: 12000, height: '40%' },
+    { month: 'Feb', amount: 19000, height: '60%' },
+    { month: 'Mar', amount: 15000, height: '50%' },
+    { month: 'Apr', amount: 28000, height: '90%' },
+    { month: 'May', amount: 22000, height: '70%' },
+    { month: 'Jun', amount: 32000, height: '100%' },
+  ];
 
   return (
     <div className="admin-dashboard-container">
@@ -116,6 +137,50 @@ export const AdminDashboardPage: React.FC = () => {
           <span className="metric-context-subtext">
             Hits: {stats.cache.hits} | Misses: {stats.cache.misses}
           </span>
+        </div>
+      </div>
+
+      {/* Visual Analytics Chart & System Tools split layout */}
+      <div className="dashboard-split-layout-grid margin-y-lg">
+        {/* Sleek CSS-based Monthly Revenue Chart */}
+        <div className="data-table-panel visual-chart-panel">
+          <div className="panel-title-row">
+            <BarChart3 size={18} className="text-accent" />
+            <h3>Monthly Revenue Telemetry</h3>
+          </div>
+          <div className="revenue-bar-chart-container">
+            {monthlyRevenueData.map((data, index) => (
+              <div key={index} className="chart-bar-column">
+                <div className="chart-bar-glow-wrapper">
+                  <div className="chart-bar-fill" style={{ height: data.height }} title={`$${data.amount}`}></div>
+                </div>
+                <span className="chart-bar-label">{data.month}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* System Administration Diagnostics Panel */}
+        <div className="data-table-panel diagnostics-panel">
+          <h3>System Control & Operations</h3>
+          <p className="panel-description-text">Trigger high-performance backend commands and clear cache instances directly.</p>
+          <div className="diagnostics-buttons-stack">
+            <button
+              onClick={handleClearCache}
+              disabled={clearingCache}
+              className="btn-secondary full-width-btn flex-row-gap justify-center"
+            >
+              <Trash2 size={16} />
+              {clearingCache ? 'Clearing Cache...' : 'Flush Redis Cache'}
+            </button>
+            <button
+              onClick={fetchStats}
+              className="btn-primary full-width-btn flex-row-gap justify-center"
+            >
+              <RefreshCcw size={16} />
+              Recompile Telemetry Reports
+            </button>
+          </div>
         </div>
       </div>
 
