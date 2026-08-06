@@ -2,15 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
+import { useCompare } from '../../context/CompareContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingCart, User, LogOut, ShieldAlert, Sparkles,
-  Search, Menu, X, ChevronDown, Package
+  Search, Menu, X, ChevronDown, Package, Heart, ArrowLeftRight
 } from 'lucide-react';
+import { CompareModal } from '../products/CompareModal';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const { itemsCount } = useCart();
+  const { wishlistCount } = useWishlist();
+  const { compareCount } = useCompare();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -18,6 +23,7 @@ export const Navbar: React.FC = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -107,12 +113,38 @@ export const Navbar: React.FC = () => {
               onClick={() => setSearchOpen(!searchOpen)}
               className="btn-icon"
               aria-label="Search"
+              title="Search"
             >
               <Search size={20} />
             </button>
 
+            {/* Compare Trigger */}
+            <button
+              onClick={() => setCompareModalOpen(true)}
+              className="btn-icon relative"
+              aria-label="Compare"
+              title="Compare Products"
+            >
+              <ArrowLeftRight size={20} />
+              {compareCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {compareCount}
+                </span>
+              )}
+            </button>
+
+            {/* Wishlist */}
+            <Link to="/products?filter=wishlist" className="btn-icon relative" aria-label="Wishlist" title="Wishlist">
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-danger text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
+
             {/* Cart */}
-            <Link to="/cart" className="btn-icon relative" aria-label="Shopping Cart">
+            <Link to="/cart" className="btn-icon relative" aria-label="Shopping Cart" title="Cart">
               <ShoppingCart size={20} />
               {itemsCount > 0 && (
                 <motion.span
@@ -156,10 +188,10 @@ export const Navbar: React.FC = () => {
                       </div>
                       <div className="py-1">
                         <Link to="/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-alt transition-colors">
-                          <User size={16} /> Profile
+                          <User size={16} /> Profile Settings
                         </Link>
                         <Link to="/orders" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-bg-alt transition-colors">
-                          <Package size={16} /> Orders
+                          <Package size={16} /> My Orders
                         </Link>
                       </div>
                       <div className="border-t border-border py-1">
@@ -250,7 +282,7 @@ export const Navbar: React.FC = () => {
                 {user && (
                   <>
                     <Link to="/profile" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-bg-alt transition-colors">Profile</Link>
-                    <Link to="/orders" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-bg-alt transition-colors">Orders</Link>
+                    <Link to="/orders" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-bg-alt transition-colors">My Orders</Link>
                   </>
                 )}
                 {user?.role === 'admin' && (
@@ -268,6 +300,8 @@ export const Navbar: React.FC = () => {
           </>
         )}
       </AnimatePresence>
+
+      <CompareModal isOpen={compareModalOpen} onClose={() => setCompareModalOpen(false)} />
 
       {/* Spacer for fixed header */}
       <div className="h-16 md:h-18" />

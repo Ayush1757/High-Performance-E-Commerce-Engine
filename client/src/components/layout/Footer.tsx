@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Mail, ArrowRight, Globe } from 'lucide-react';
+import { PolicyModal } from './PolicyModal';
 import toast from 'react-hot-toast';
 
 export const Footer: React.FC = () => {
-  const [email, setEmail] = React.useState('');
+  const [email, setEmail] = useState('');
+  const [activePolicy, setActivePolicy] = useState<string | null>(null);
 
   const handleNewsletter = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +101,13 @@ export const Footer: React.FC = () => {
             <ul className="space-y-3">
               {['Help Center', 'Shipping Policy', 'Return Policy', 'Privacy Policy', 'Terms of Service'].map((item) => (
                 <li key={item}>
-                  <span className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer">{item}</span>
+                  <button
+                    type="button"
+                    onClick={() => setActivePolicy(item)}
+                    className="text-sm text-white/60 hover:text-white transition-colors cursor-pointer text-left"
+                  >
+                    {item}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -121,6 +129,8 @@ export const Footer: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <PolicyModal type={activePolicy} onClose={() => setActivePolicy(null)} />
     </footer>
   );
 };

@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import { CompareProvider } from './context/CompareContext';
 import { Layout } from './components/layout/Layout';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
@@ -24,38 +26,42 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <AuthProvider>
         <CartProvider>
-          <Router>
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 3000,
-                style: {
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-md)',
-                  boxShadow: 'var(--shadow-lg)',
-                  fontSize: '0.875rem',
-                  fontFamily: 'var(--font-sans)',
-                },
-              }}
-            />
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/:id" element={<ProductDetailPage />} />
-                <Route path="/cart" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/admin" element={<AdminDashboardPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Layout>
-          </Router>
+          <WishlistProvider>
+            <CompareProvider>
+              <Router>
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    duration: 3000,
+                    style: {
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-text)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-lg)',
+                      fontSize: '0.875rem',
+                      fontFamily: 'var(--font-sans)',
+                    },
+                  }}
+                />
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/products" element={<ProductsPage />} />
+                    <Route path="/products/:id" element={<ProductDetailPage />} />
+                    <Route path="/cart" element={<CartPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/orders" element={<OrdersPage />} />
+                    <Route path="/admin" element={<AdminDashboardPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </Layout>
+              </Router>
+            </CompareProvider>
+          </WishlistProvider>
         </CartProvider>
       </AuthProvider>
     </ErrorBoundary>
