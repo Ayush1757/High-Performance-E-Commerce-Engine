@@ -79,7 +79,7 @@ ecommerce-ai-engine/
 # 1. Install & Seed database (In server directory)
 cd server
 npm install
-npm run data:import     # Seeds 1000 products with vector embeddings
+npm run import-products # Imports Amazon product catalog with AI vector embeddings
 
 # 2. Run Backend
 npm run dev
@@ -89,6 +89,34 @@ cd client
 npm install
 npm run dev
 ```
+
+---
+
+## 📦 Amazon Product Dataset Import
+
+- **Dataset Source**: Kaggle Amazon Products Dataset (1.4M+ catalog records across 248 categories)
+- **CSV File Paths**:
+  - Products: `server/data/amazon_products.csv`
+  - Categories: `server/data/amazon_categories.csv`
+- **Import Command**:
+  ```bash
+  cd server
+  npm run import-products   # Streaming import, deduplication, & vector embedding calculation
+  # OR
+  npm run seed              # Alias for dataset import
+  ```
+- **Expected Output**:
+  ```
+  ====================================
+  🚀 AMAZON PRODUCT CATALOG IMPORTING SCRIPT
+  ====================================
+  MongoDB Connected: 127.0.0.1
+  ✅ Loaded 248 categories from amazon_categories.csv
+  📦 Processing dataset stream & inserting in optimized batches...
+     ➜ Imported 130,000 products...
+  ✅ AMAZON PRODUCT CATALOG IMPORT COMPLETE
+  📄 Summary report saved to: IMPORT_REPORT.md
+  ```
 
 ---
 
