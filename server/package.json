@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "data:import": "tsx src/seeder.ts",
-    "data:destroy": "tsx src/seeder.ts -d"
+    "data:destroy": "tsx src/seeder.ts -d",
+    "import-products": "tsx scripts/importProducts.ts",
+    "seed": "tsx scripts/importProducts.ts"
   },
   "keywords": [],
   "author": "",

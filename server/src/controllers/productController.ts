@@ -85,7 +85,7 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
     const cacheKey = `products:${JSON.stringify(req.query)}`;
 
     const fetchProductsData = async () => {
-      const query: ProductQueryFilter = {};
+      const query: any = { name: { $exists: true } };
 
       // 1. Search Query (partial case-insensitive match on name or description)
       // Regex characters are escaped to prevent injection
@@ -119,7 +119,7 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       }
 
       // 5. Sorting
-      let sortOptions: ProductSortOptions = { createdAt: -1 }; // default newest first
+      let sortOptions: ProductSortOptions = { _id: -1 }; // default newest first (indexed by default)
       if (sort === 'price_asc') {
         sortOptions = { price: 1 };
       } else if (sort === 'price_desc') {
@@ -129,7 +129,7 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
       } else if (sort === 'name_asc') {
         sortOptions = { name: 1 };
       } else if (sort === 'oldest') {
-        sortOptions = { createdAt: 1 };
+        sortOptions = { _id: 1 };
       }
 
       // 6. Pagination Math
@@ -177,7 +177,7 @@ export const getProductById = async (req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
 
-    if (!mongoose.isValidObjectId(id)) {
+    if (!id || typeof id !== 'string') {
       res.status(400).json({ success: false, message: 'Invalid product ID format' });
       return;
     }

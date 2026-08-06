@@ -68,8 +68,12 @@ app.use('/api/auth/register', authLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Sanitize data against NoSQL injection
-app.use(mongoSanitize());
+// Sanitize data against NoSQL injection (Express 5 compatible)
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.params) mongoSanitize.sanitize(req.params);
+  next();
+});
 
 // Performance logging middleware
 app.use(perfLogger);
