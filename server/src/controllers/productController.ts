@@ -118,6 +118,17 @@ export const getProducts = async (req: Request, res: Response): Promise<void> =>
         }
       }
 
+      // 5. Rating Filter
+      const { minRating, inStock } = req.query;
+      if (minRating !== undefined && minRating !== '') {
+        query.rating = { $gte: Number(minRating) };
+      }
+
+      // 6. Availability Filter (In Stock)
+      if (inStock === 'true' || inStock === true) {
+        query.stock = { $gt: 0 };
+      }
+
       // 5. Sorting
       let sortOptions: ProductSortOptions = { _id: -1 }; // default newest first (indexed by default)
       if (sort === 'price_asc') {

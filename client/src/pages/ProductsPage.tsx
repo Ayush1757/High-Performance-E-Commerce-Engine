@@ -6,6 +6,8 @@ import { ProductGrid } from '../components/products/ProductGrid';
 import { SearchBar } from '../components/products/SearchBar';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { QuickViewModal } from '../components/products/QuickViewModal';
+import { useWishlist } from '../context/WishlistContext';
 import { Sparkles, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -15,6 +17,9 @@ export const ProductsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [metadata, setMetadata] = useState({ page: 1, pages: 1, total: 0 });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+
+  const { wishlist } = useWishlist();
 
   const queryParam = searchParams.get('search') || '';
   const isVectorParam = searchParams.get('isVector') === 'true';
@@ -22,10 +27,21 @@ export const ProductsPage: React.FC = () => {
   const brandParam = searchParams.get('brand') || '';
   const minPriceParam = searchParams.get('minPrice') || '';
   const maxPriceParam = searchParams.get('maxPrice') || '';
+  const minRatingParam = searchParams.get('minRating') || '';
+  const inStockParam = searchParams.get('inStock') === 'true';
+  const filterMode = searchParams.get('filter') || '';
   const sortParam = searchParams.get('sort') || 'newest';
   const pageParam = Number(searchParams.get('page')) || 1;
 
   useEffect(() => {
+    // If viewing Wishlist
+    if (filterMode === 'wishlist') {
+      setProducts(wishlist);
+      setMetadata({ page: 1, pages: 1, total: wishlist.length });
+      setLoading(false);
+      return;
+    }
+
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -35,6 +51,8 @@ export const ProductsPage: React.FC = () => {
         if (brandParam) params.append('brand', brandParam);
         if (minPriceParam) params.append('minPrice', minPriceParam);
         if (maxPriceParam) params.append('maxPrice', maxPriceParam);
+        if (minRatingParam) params.append('minRating', minRatingParam);
+        if (inStockParam) params.append('inStock', 'true');
         if (sortParam) params.append('sort', sortParam);
         params.append('page', pageParam.toString());
         params.append('limit', '12');
@@ -69,12 +87,13 @@ export const ProductsPage: React.FC = () => {
       }
     };
     fetchProducts();
-  }, [queryParam, isVectorParam, categoryParam, brandParam, minPriceParam, maxPriceParam, sortParam, pageParam]);
+  }, [queryParam, isVectorParam, categoryParam, brandParam, minPriceParam, maxPriceParam, minRatingParam, inStockParam, filterMode, sortParam, pageParam, wishlist]);
 
   const handleSearch = (q: string, isV: boolean) => {
     const p = new URLSearchParams(searchParams);
     if (q) { p.set('search', q); p.set('isVector', isV.toString()); }
     else { p.delete('search'); p.delete('isVector'); }
+    p.delete('filter');
     p.set('page', '1');
     setSearchParams(p);
   };
@@ -82,6 +101,7 @@ export const ProductsPage: React.FC = () => {
   const handleFilter = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams);
     if (value) p.set(key, value); else p.delete(key);
+    p.delete('filter');
     p.set('page', '1');
     setSearchParams(p);
   };
@@ -96,10 +116,13 @@ export const ProductsPage: React.FC = () => {
   const clearAll = () => setSearchParams({});
 
   const activeFilters = [
+    filterMode === 'wishlist' && { key: 'filter', label: 'My Wishlist' },
     categoryParam && { key: 'category', label: `Category: ${categoryParam}` },
     brandParam && { key: 'brand', label: `Brand: ${brandParam}` },
     minPriceParam && { key: 'minPrice', label: `Min: $${minPriceParam}` },
     maxPriceParam && { key: 'maxPrice', label: `Max: $${maxPriceParam}` },
+    minRatingParam && { key: 'minRating', label: `Rating: ${minRatingParam}+ ⭐` },
+    inStockParam && { key: 'inStock', label: 'In Stock Only' },
   ].filter(Boolean) as { key: string; label: string }[];
 
   const categories = ['Electronics', 'Shoes', 'Mobiles', 'Clothing', 'Accessories', 'Suitcases', 'Audio'];
@@ -129,7 +152,7 @@ export const ProductsPage: React.FC = () => {
       </div>
 
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Price Range</label>
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Price Range ($)</label>
         <div className="flex gap-2">
           <input type="number" placeholder="Min" value={minPriceParam} onChange={(e) => handleFilter('minPrice', e.target.value)} className="input text-sm" />
           <input type="number" placeholder="Max" value={maxPriceParam} onChange={(e) => handleFilter('maxPrice', e.target.value)} className="input text-sm" />
@@ -137,20 +160,41 @@ export const ProductsPage: React.FC = () => {
       </div>
 
       <div className="space-y-2">
+        <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Minimum Rating</label>
+        <select value={minRatingParam} onChange={(e) => handleFilter('minRating', e.target.value)} className="select text-sm">
+          <option value="">All Ratings</option>
+          <option value="4">4 Stars & Above</option>
+          <option value="3">3 Stars & Above</option>
+          <option value="2">2 Stars & Above</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={inStockParam}
+            onChange={(e) => handleFilter('inStock', e.target.checked ? 'true' : '')}
+            className="rounded border-border text-accent focus:ring-accent"
+          />
+          <span className="text-text-secondary font-medium">In Stock Only</span>
+        </label>
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-border">
         <label className="text-xs font-semibold text-text-muted uppercase tracking-wider">Sort By</label>
         <select value={sortParam} onChange={(e) => handleFilter('sort', e.target.value)} className="select text-sm">
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
           <option value="price_asc">Price: Low → High</option>
           <option value="price_desc">Price: High → Low</option>
-          <option value="rating_desc">Top Rated</option>
-          <option value="name_asc">Name: A → Z</option>
+          <option value="rating_desc">Highest Rated</option>
+          <option value="name_asc">Alphabetical: A → Z</option>
         </select>
       </div>
     </div>
   );
 
-  // Pagination with ellipsis
   const renderPagination = () => {
     if (metadata.pages <= 1) return null;
     const pages: (number | string)[] = [];
@@ -195,9 +239,11 @@ export const ProductsPage: React.FC = () => {
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <Link to="/" className="hover:text-text">Home</Link>
           <span>/</span>
-          <span className="text-text font-medium">Shop</span>
+          <span className="text-text font-medium">{filterMode === 'wishlist' ? 'Wishlist' : 'Shop'}</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold">Browse Products</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">
+          {filterMode === 'wishlist' ? 'My Wishlist' : 'Browse Products'}
+        </h1>
         <SearchBar onSearch={handleSearch} initialQuery={queryParam} initialIsVector={isVectorParam} />
 
         {isVectorParam && (
@@ -256,12 +302,14 @@ export const ProductsPage: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <p className="text-sm text-text-secondary">{metadata.total.toLocaleString()} products found</p>
               </div>
-              <ProductGrid products={products} />
-              {!isVectorParam && renderPagination()}
+              <ProductGrid products={products} onQuickView={(p) => setQuickViewProduct(p)} />
+              {!isVectorParam && filterMode !== 'wishlist' && renderPagination()}
             </>
           )}
         </section>
       </div>
+
+      <QuickViewModal product={quickViewProduct} onClose={() => setQuickViewProduct(null)} />
     </div>
   );
 };

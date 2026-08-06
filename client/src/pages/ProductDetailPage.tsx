@@ -3,12 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import { useCompare } from '../context/CompareContext';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { motion } from 'framer-motion';
 import {
   Star, ShoppingCart, ChevronRight, ShieldCheck, Truck,
-  RefreshCw, Minus, Plus, Check, AlertTriangle
+  RefreshCw, Minus, Plus, Check, AlertTriangle, Heart, Zap, ArrowLeftRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -19,7 +21,10 @@ export const ProductDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'specs' | 'reviews' | 'shipping'>('specs');
+
   const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToCompare, isInCompare } = useCompare();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,7 +44,13 @@ export const ProductDetailPage: React.FC = () => {
     if (product) {
       addToCart(product, quantity);
       toast.success(`${quantity} × ${product.name} added to cart!`);
-      navigate('/cart');
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (product) {
+      addToCart(product, quantity);
+      navigate('/checkout');
     }
   };
 
@@ -50,6 +61,9 @@ export const ProductDetailPage: React.FC = () => {
 
   if (loading) return <LoadingSpinner fullPage count={1} message="Loading product..." />;
   if (!product) return <EmptyState type="error" title="Product Not Found" description="This product doesn't exist." actionText="Back to Shop" actionPath="/products" />;
+
+  const isWishlisted = isInWishlist(product._id);
+  const isCompared = isInCompare(product._id);
 
   const specs = [
     { name: 'Category', value: product.category },
@@ -88,7 +102,7 @@ export const ProductDetailPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="card overflow-hidden"
+          className="card overflow-hidden relative"
         >
           <div className="aspect-square bg-bg-alt flex items-center justify-center p-8">
             <img
@@ -132,24 +146,44 @@ export const ProductDetailPage: React.FC = () => {
           <p className="text-sm text-text-secondary leading-relaxed">{product.description}</p>
 
           {product.stock > 0 && (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center border border-border rounded-lg">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-l-lg">
-                  <Minus size={16} />
-                </button>
-                <span className="w-12 text-center text-sm font-semibold">{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-r-lg">
-                  <Plus size={16} />
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border border-border rounded-lg">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-l-lg">
+                    <Minus size={16} />
+                  </button>
+                  <span className="w-12 text-center text-sm font-semibold">{quantity}</span>
+                  <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="w-10 h-10 flex items-center justify-center hover:bg-bg-alt transition-colors rounded-r-lg">
+                    <Plus size={16} />
+                  </button>
+                </div>
+                <button onClick={handleAddToCart} className="btn btn-primary btn-lg flex-1">
+                  <ShoppingCart size={18} /> Add to Cart
                 </button>
               </div>
-              <button onClick={handleAddToCart} className="btn btn-primary btn-lg flex-1">
-                <ShoppingCart size={18} /> Add to Cart
-              </button>
+
+              <div className="flex gap-3">
+                <button onClick={handleBuyNow} className="btn btn-secondary flex-1">
+                  <Zap size={16} className="text-amber-500" /> Buy Now
+                </button>
+                <button
+                  onClick={() => toggleWishlist(product)}
+                  className={`btn btn-secondary px-4 ${isWishlisted ? 'text-danger border-danger' : ''}`}
+                >
+                  <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} /> Wishlist
+                </button>
+                <button
+                  onClick={() => addToCompare(product)}
+                  className={`btn btn-secondary px-4 ${isCompared ? 'text-accent border-accent' : ''}`}
+                >
+                  <ArrowLeftRight size={18} /> Compare
+                </button>
+              </div>
             </div>
           )}
 
           {/* Trust Badges */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 pt-2">
             {[
               { icon: <ShieldCheck size={18} />, label: 'Secure Checkout' },
               { icon: <Truck size={18} />, label: 'Free Shipping' },
